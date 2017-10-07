@@ -1,6 +1,6 @@
 Uniform_sampling/.idea/*
 benchmark/*
-__pycache__/*
+*/__pycache__/*
 communication/*
 *.zip
 *.pdf

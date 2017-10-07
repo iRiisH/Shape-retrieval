@@ -7,7 +7,7 @@ def parse(index,database_path=''):
 
     relative = '../benchmark/db/'
     partindex = str(index // 100)
-    fileindex = str(index % 100)
+    fileindex = str(index)
     path = os.path.join(database_path,relative+partindex+'/m'+fileindex+'/m'+fileindex+'.off')
 
     f = open(path,'r')
