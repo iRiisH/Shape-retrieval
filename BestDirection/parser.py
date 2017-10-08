@@ -5,7 +5,7 @@ def parse(index,database_path=''):
         s = f.readline()
         return list(map(eval,s.strip().split(' ')))
 
-    relative = '../benchmark/db/'
+    relative = '../data/benchmark/db/'
     partindex = str(index // 100)
     fileindex = str(index)
     path = os.path.join(database_path,relative+partindex+'/m'+fileindex+'/m'+fileindex+'.off')

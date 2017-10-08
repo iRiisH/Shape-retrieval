@@ -5,6 +5,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import os
 
 
 #########################################################################
@@ -239,7 +240,7 @@ def scale_v(scalar, v):
 #############################################################################
 
 
-if __name__ == '__main__':
+def plot_before_after():
     n = 40
     points = []
     for i in range(n):
@@ -250,3 +251,20 @@ if __name__ == '__main__':
     plot_voronoi(sv_init)
     plot_voronoi(sv)
 
+
+def generate_uniform_views(n_vec):
+    par_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+    dst_file = os.path.join(par_dir, 'data/views/{}.txt'.format(n_vec))
+    points = []
+    for i in range(n_vec):
+        points.append(spher2cartesian(random.uniform(0., 2 * np.pi), random.uniform(-np.pi / 2, np.pi / 2)))
+    sv = lloyd_relaxation(points)
+    with open(dst_file, 'w') as f:
+        for view in sv.points:
+            f.write('{} {} {}\n'.format(view[0], view[1], view[2]))
+            # print('{} {} {}'.format(view[0], view[1], view[2]))
+
+if __name__ == '__main__':
+    l = [7, 22, 52, 102, 202]
+    for n in l:
+            generate_uniform_views(n)

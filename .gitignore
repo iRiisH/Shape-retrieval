@@ -4,3 +4,4 @@ benchmark/*
 communication/*
 *.zip
 *.pdf
+data/*
