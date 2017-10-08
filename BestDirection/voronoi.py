@@ -252,7 +252,14 @@ def plot_before_after():
     plot_voronoi(sv)
 
 
+# TODO: plot generated vectors
+
+
 def generate_uniform_views(n_vec):
+    """
+    randomly picks n_vec vectors over the surface of the 3-sphere, then applies to them
+    Lloyd's relaxation and returns the obtained points
+    """
     par_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
     dst_file = os.path.join(par_dir, 'data/views/{}.txt'.format(n_vec))
     points = []
