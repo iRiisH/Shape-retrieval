@@ -1,11 +1,15 @@
 from matplotlib import colors
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy.spatial import SphericalVoronoi
-from math import *
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import random
 
+
+#########################################################################
+########################### PLOT FUNCTIONS ##############################
+#########################################################################
 
 def subdivide(verts, faces):
     """
@@ -72,13 +76,17 @@ def plot_voronoi(sv):
     plt.show()
 
 
+#########################################################################
+########################### LLOYD RELAXATION ############################
+#########################################################################
+
 def lloyd_relaxation(points):
     """
     performs a spherical Lloyd's relaxation over the given set of points
     """
     center = np.array([0, 0, 0])
     radius = 1
-    n_it = 10
+    n_it = 100
 
     sv = None
     for i in range(n_it):
@@ -86,9 +94,14 @@ def lloyd_relaxation(points):
         points = []
         for region in sv.regions:
             polygon = sv.vertices[region]
+            # pol_tup = [(vert[0], vert[1], vert[2]) for vert in polygon]
             centroid = get_centroid(polygon)
             points.append(centroid)
     return sv
+
+#############################################################################
+############################ CENTROID COMPUTATION ###########################
+#############################################################################
 
 
 def spher2cartesian(theta, phi):
@@ -152,10 +165,10 @@ def points_are_equivalent(a, b, vague_tolerance):
 
 
 def degree_spherical_to_cartesian(point):
-    rad_lon, rad_lat, r = radians(point[0]), radians(point[1]), point[2]
-    x = r * cos(rad_lat) * cos(rad_lon)
-    y = r * cos(rad_lat) * sin(rad_lon)
-    z = r * sin(rad_lat)
+    rad_lon, rad_lat, r = math.radians(point[0]), math.radians(point[1]), point[2]
+    x = r * math.cos(rad_lat) * math.cos(rad_lon)
+    y = r * math.cos(rad_lat) * math.sin(rad_lon)
+    z = r * math.sin(rad_lat)
     return x, y, z
 
 
@@ -164,7 +177,7 @@ def area_of_spherical_triangle(r, a, b, c):
     # build an angle set: A(CAB), B(ABC), C(BCA)
     # http://math.stackexchange.com/a/66731/25581
     A, B, C = surface_points_to_surface_radians(a, b, c)
-    E = A + B + C - pi  # E is called the spherical excess
+    E = A + B + C - math.pi  # E is called the spherical excess
     area = r**2 * E
     # add or subtract area based on clockwise-ness of a-b-c
     # http://stackoverflow.com/a/10032657/377366
@@ -182,14 +195,14 @@ def surface_points_to_surface_radians(a, b, c):
         x_startmid, x_endmid = xprod(start, mid), xprod(end, mid)
         ratio = (dprod(x_startmid, x_endmid)
                  / (mag(x_startmid) * mag(x_endmid)))
-        angles.append(acos(ratio))
+        angles.append(math.acos(ratio))
     return angles
 
 
 def clockwise_or_counter(a, b, c):
     ab = diff_cartesians(b, a)
     bc = diff_cartesians(c, b)
-    x = xprod(ab, bc)
+    x = dprod(ab, bc)
     if x < 0:
         return 'clockwise'
     elif x > 0:
@@ -217,11 +230,13 @@ def dprod(v1, v2):
 
 
 def mag(v1):
-    return sqrt(v1[0]**2 + v1[1]**2 + v1[2]**2)
+    return math.sqrt(v1[0]**2 + v1[1]**2 + v1[2]**2)
 
 
 def scale_v(scalar, v):
     return tuple(scalar * vi for vi in v)
+
+#############################################################################
 
 
 if __name__ == '__main__':
@@ -230,6 +245,8 @@ if __name__ == '__main__':
     for i in range(n):
         points.append(spher2cartesian(random.uniform(0., 2*np.pi), random.uniform(-np.pi/2, np.pi/2)))
     # sort vertices (optional, helpful for plotting)
+    sv_init = SphericalVoronoi(np.array(points), 1.0, [0, 0, 0])
     sv = lloyd_relaxation(points)
+    plot_voronoi(sv_init)
     plot_voronoi(sv)
 
