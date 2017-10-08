@@ -1,7 +1,5 @@
-Uniform_sampling/.idea/*
-benchmark/*
-*/__pycache__/*
-communication/*
+BestDirection/__pycache__/*
+BestDirection/.idea/*
 *.zip
 *.pdf
 data/*
