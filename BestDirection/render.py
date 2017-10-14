@@ -20,7 +20,12 @@ def record_to_str(rc):
 def best_view():
     vp.app.use_app('pyqt5')
 
-    canvas = scn.SceneCanvas(keys='interactive', size=(600, 600), show=True, bgcolor='white')
+    canvas = scn.SceneCanvas(
+        keys='interactive',
+        size=(600, 600),
+        show=True,
+        bgcolor='white',
+        fullscreen=True)
 
     view = canvas.central_widget.add_view()
     view.camera = scn.TurntableCamera()
@@ -37,12 +42,11 @@ def best_view():
 
     records = parser.load(record_filename)
     vs, fs, fc = parser.parse(cur_model_id)
-    vs -= np.mean(vs, axis=0)
     mesh = scn.visuals.Mesh(vertices=vs, faces=fs, vertex_colors=fc, parent=view.scene)
 
     @canvas.connect
     def on_key_press(event):
-        global view, mesh, cur_model_id, n, record_filename, records
+        nonlocal view, mesh, cur_model_id, n, record_filename, records
         print('-----')
         ch = event.text
         if ch == 'n' or ch == 'p':
@@ -122,7 +126,6 @@ def save_views(n_views):
             #     ('class', int)]
             # records = parser.load(record_filename)
             vs, fs, fc = parser.parse(cur_model_id)
-            vs -= np.mean(vs, axis=0)
             scn.visuals.Mesh(vertices=vs, faces=fs, vertex_colors=fc, parent=view.scene)
             view.camera.scale_factor = 1.5
             view.camera.elevation = (180./math.pi)*elevation
@@ -135,4 +138,5 @@ def save_views(n_views):
 
 
 if __name__ == '__main__':
-    save_views(7)
+    # save_views(7)
+    best_view()
