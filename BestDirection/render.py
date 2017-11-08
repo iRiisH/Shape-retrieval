@@ -1,14 +1,14 @@
 import numpy as np
+import sys,os,math
+
+import cv2
+
 import vispy as vp
-import parser
-import sys
 import vispy.plot as plt
 import vispy.scene as scn
-import cv2
-import os
-import math
-import progressbar
 
+import progressbar
+import parser
 
 def record_to_str(rc):
     s = str(rc[0])
@@ -24,7 +24,7 @@ def best_view():
         keys='interactive',
         size=(600, 600),
         show=True,
-        bgcolor='white',
+        bgcolor='black',
         fullscreen=True)
 
     view = canvas.central_widget.add_view()
@@ -37,12 +37,16 @@ def best_view():
         ('class', int)]
 
     n = 1815
-    cur_model_id = 0
+    cur_model_id = 610
+    # cur_model_id = 293
     record_filename = 'best_worst_direction.txt'
 
     records = parser.load(record_filename)
     vs, fs, fc = parser.parse(cur_model_id)
     mesh = scn.visuals.Mesh(vertices=vs, faces=fs, vertex_colors=fc, parent=view.scene)
+    # mesh.light_dir = (10,5,-5)
+    # mesh.ambient_light_color = 'white'
+    # mesh.shading = 'flat'
 
     @canvas.connect
     def on_key_press(event):
