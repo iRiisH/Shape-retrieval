@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 
-def parse(index, database_path=''):
+def parse(index, database_path='',centralisation=True):
     def line_parser(f):
         s = f.readline()
         return list(map(eval, s.strip().split(' ')))
@@ -29,6 +29,8 @@ def parse(index, database_path=''):
     fc[:, 1] = rng.randn(V)
     fc[:, 2] = np.linspace(0, 1, V)
 
+    if centralisation:
+        vs -= np.mean(vs, axis=0)
     return vs, fs, fc
 
 
