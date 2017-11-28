@@ -21,18 +21,57 @@ public class NormalEstimator {
 		return r;
 	}
 
+	private Point_3[] getKNearestNeighbors(Point_3[] ps,Point_3 q, int k) {
+		Point_3[] nearests = new Point_3[k];
+		ArrayList<DistPoint> dpl = new ArrayList<DistPoint>();
+		int n = ps.length;
+		for(int i=0;i<n;i++){
+			Point_3 curp = ps[i];
+			dpl.add(new DistPoint((double)q.distanceFrom(curp),curp));
+		}
+		Collections.sort(dpl);
+		for(int i=0;i<k;i++){
+			nearests[i] = dpl.get(i).point;
+		}
+		return nearests;
+	}
+
+	/**
+	 * Return the closest points to q, at distance at most d <p>
+	 * <p>
+	 * Warning: naive method, based on a linear scan
+	 *
+	 * @param sqRad  square of the distance (sqRad=d*d)
+	 * @param q  point query
+	 */
+	private List<Point_3> getClosestPoints(Point_3[] ps,Point_3 q, double sqRad) {
+		ArrayList<Point_3> nearests = new ArrayList<Point_3>();
+		ArrayList<DistPoint> dpl = new ArrayList<DistPoint>();
+		int n = ps.length;
+		for(int i=0;i<n;i++){
+			Point_3 curp = ps[i];
+			dpl.add(new DistPoint((double)q.distanceFrom(curp),curp));
+		}
+		Collections.sort(dpl);
+
+		int i=0;
+		while(true){
+			if(i==dpl.size()||dpl.get(i).dist>sqRad)break;
+			nearests.add(dpl.get(i).point);i++;
+		}
+		return nearests;
+	}
 	/**
 	 * Compute the outliers in the point cloud
 	 *
 	 * @param points  input point cloud
 	 * @param k  number of closest neighbor
 	 */
-	public static double[][] computeNormals(PointSet points, int k) {
-		Point_3[] ps = points.toArray();
+	public static double[][] computeNormals(Point_3[] ps, int k) {
 		int n = ps.length;
 		double[][] normals = new double[n][3];
 		for(int i=0;i<n;i++){
-			Point_3[] nearests = points.getKNearestNeighbors(ps[i],k+1);
+			Point_3[] nearests = this.getKNearestNeighbors(ps,ps[i],k+1);
 			double[][] pn = new double[k+1][3];
 			for(int j=0;j<=k;j++){
 				pn[j] = point_3ToArray(nearests[j]);
@@ -59,15 +98,14 @@ public class NormalEstimator {
 	 * @param points  input point cloud
 	 * @param sqRad  distance parameter (sqRad=d*d)
 	 */
-	public static double[][] computeNormals(PointSet points, double sqRad) {
-		Point_3[] ps = points.toArray();
+	public static double[][] computeNormals(point_3[] points, double sqRad) {
 		int n = ps.length;
 
 		double[][] normals = new double[n][3];
 
 		for(int i=0;i<n;i++){
 
-			List<Point_3> _nearests = points.getClosestPoints(ps[i],sqRad);
+			List<Point_3> _nearests = this.getClosestPoints(ps,ps[i],sqRad);
 			int k = _nearests.size()-1;
 			if(k==0){continue;}
 			Point_3[] nearests = new Point_3[k+1];_nearests.toArray(nearests);
@@ -91,31 +129,6 @@ public class NormalEstimator {
 			normals[i] = V.transpose().getArray()[0];
 		}
 		return normals;
-	}
-
-	/**
-	 * Given a point p and a distance d, <p>
-	 * compute the matrix $C=\sum_{i}^{k} [(p_i-P)(p_i-P)^t]$<p>
-	 * <p>
-	 * where $k$ is the number of points ${p_i}$ at distance at most $d$ from point $p$
-	 *
-	 * @param points  input point cloud
-	 * @param p  the query point (for which we want to compute the normal)
-	 * @param sqRad  squared distance (sqRad=d*d)
-	 */
-	public static Matrix getCovarianceMatrix(PointSet points, Point_3 p, double sqRad) {
-		throw new Error("To be completed (TD6)");
-	}
-
-	/**
-	 * Return the distance parameter (a rough approximation of the average distance between neighboring points)
-	 *
-	 * @param points  input point cloud
-	 */
-	public static double estimateAverageDistance(PointSet points) {
-		int n=(int)Math.sqrt(points.size());
-		double maxDistance=points.getMaxDistanceFromOrigin();
-		return maxDistance*4/n;
 	}
 
 }
