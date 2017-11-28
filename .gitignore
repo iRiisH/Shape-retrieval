@@ -3,3 +3,4 @@ BestDirection/.idea/*
 *.zip
 *.pdf
 data/*
+.metadata/*
