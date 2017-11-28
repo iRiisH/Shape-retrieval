@@ -15,6 +15,20 @@ import Jcg.geometry.Vector_3;
  */
 public class NormalEstimator {
 
+	private class DistPoint implements Comparable<DistPoint>{
+		final double dist;
+		final Point_3 point;
+		public DistPoint(double dist,Point_3 point){
+			this.dist = dist;
+			this.point = point;
+		}
+		@Override
+		public int compareTo(DistPoint dp){
+			return Double.valueOf(this.dist).compareTo(dp.dist);
+		}
+
+	}
+	
 	private static double[] point_3ToArray(Point_3 p){
 		double[] r = new double[3];
 		r[0] = (double)p.getX().doubleValue();
