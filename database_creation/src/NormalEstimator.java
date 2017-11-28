@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import Jama.EigenvalueDecomposition;
@@ -15,9 +17,9 @@ public class NormalEstimator {
 
 	private static double[] point_3ToArray(Point_3 p){
 		double[] r = new double[3];
-		r[0] = (double)p.getX();
-		r[1] = (double)p.getY();
-		r[2] = (double)p.getZ();
+		r[0] = (double)p.getX().doubleValue();
+		r[1] = (double)p.getY().doubleValue();
+		r[2] = (double)p.getZ().doubleValue();
 		return r;
 	}
 
@@ -27,7 +29,7 @@ public class NormalEstimator {
 		int n = ps.length;
 		for(int i=0;i<n;i++){
 			Point_3 curp = ps[i];
-			dpl.add(new DistPoint((double)q.distanceFrom(curp),curp));
+			dpl.add(new DistPoint((double)q.distanceFrom(curp).doubleValue(),curp));
 		}
 		Collections.sort(dpl);
 		for(int i=0;i<k;i++){
@@ -50,7 +52,7 @@ public class NormalEstimator {
 		int n = ps.length;
 		for(int i=0;i<n;i++){
 			Point_3 curp = ps[i];
-			dpl.add(new DistPoint((double)q.distanceFrom(curp),curp));
+			dpl.add(new DistPoint((double)q.distanceFrom(curp).doubleValue(),curp));
 		}
 		Collections.sort(dpl);
 
@@ -98,7 +100,7 @@ public class NormalEstimator {
 	 * @param points  input point cloud
 	 * @param sqRad  distance parameter (sqRad=d*d)
 	 */
-	public static double[][] computeNormals(point_3[] points, double sqRad) {
+	public static double[][] computeNormals(Point_3[] points, double sqRad) {
 		int n = ps.length;
 
 		double[][] normals = new double[n][3];
