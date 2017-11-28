@@ -4,3 +4,5 @@ BestDirection/.idea/*
 *.pdf
 data/*
 .metadata/*
+*.class
+*.off

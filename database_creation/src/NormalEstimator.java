@@ -14,20 +14,6 @@ import Jcg.geometry.Vector_3;
  *
  */
 public class NormalEstimator {
-
-	private class DistPoint implements Comparable<DistPoint>{
-		final double dist;
-		final Point_3 point;
-		public DistPoint(double dist,Point_3 point){
-			this.dist = dist;
-			this.point = point;
-		}
-		@Override
-		public int compareTo(DistPoint dp){
-			return Double.valueOf(this.dist).compareTo(dp.dist);
-		}
-
-	}
 	
 	private static double[] point_3ToArray(Point_3 p){
 		double[] r = new double[3];
@@ -37,7 +23,7 @@ public class NormalEstimator {
 		return r;
 	}
 
-	private Point_3[] getKNearestNeighbors(Point_3[] ps,Point_3 q, int k) {
+	private static Point_3[] getKNearestNeighbors(Point_3[] ps,Point_3 q, int k) {
 		Point_3[] nearests = new Point_3[k];
 		ArrayList<DistPoint> dpl = new ArrayList<DistPoint>();
 		int n = ps.length;
@@ -60,7 +46,7 @@ public class NormalEstimator {
 	 * @param sqRad  square of the distance (sqRad=d*d)
 	 * @param q  point query
 	 */
-	private List<Point_3> getClosestPoints(Point_3[] ps,Point_3 q, double sqRad) {
+	private static List<Point_3> getClosestPoints(Point_3[] ps,Point_3 q, double sqRad) {
 		ArrayList<Point_3> nearests = new ArrayList<Point_3>();
 		ArrayList<DistPoint> dpl = new ArrayList<DistPoint>();
 		int n = ps.length;
@@ -87,7 +73,7 @@ public class NormalEstimator {
 		int n = ps.length;
 		double[][] normals = new double[n][3];
 		for(int i=0;i<n;i++){
-			Point_3[] nearests = this.getKNearestNeighbors(ps,ps[i],k+1);
+			Point_3[] nearests = getKNearestNeighbors(ps,ps[i],k+1);
 			double[][] pn = new double[k+1][3];
 			for(int j=0;j<=k;j++){
 				pn[j] = point_3ToArray(nearests[j]);
@@ -114,14 +100,14 @@ public class NormalEstimator {
 	 * @param points  input point cloud
 	 * @param sqRad  distance parameter (sqRad=d*d)
 	 */
-	public static double[][] computeNormals(Point_3[] points, double sqRad) {
+	public static double[][] computeNormals(Point_3[] ps, double sqRad) {
 		int n = ps.length;
 
 		double[][] normals = new double[n][3];
 
 		for(int i=0;i<n;i++){
 
-			List<Point_3> _nearests = this.getClosestPoints(ps,ps[i],sqRad);
+			List<Point_3> _nearests = getClosestPoints(ps,ps[i],sqRad);
 			int k = _nearests.size()-1;
 			if(k==0){continue;}
 			Point_3[] nearests = new Point_3[k+1];_nearests.toArray(nearests);
