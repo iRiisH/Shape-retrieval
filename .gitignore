@@ -6,3 +6,5 @@ data/*
 .metadata/*
 *.class
 *.off
+*/bin/*
+
