@@ -2,9 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry kind="lib" path="/home/irish/workspace/LIB/core.jar"/>
-	<classpathentry kind="lib" path="/home/irish/workspace/LIB/Jama-1.0.2.jar"/>
-	<classpathentry kind="lib" path="/home/irish/workspace/LIB/TC.jar"/>
-	<classpathentry kind="lib" path="/home/irish/workspace/LIB/Jcg.jar"/>
+	<classpathentry kind="lib" path="/home/heimdall/workspace/LIBS/Jcg.jar"/>
+	<classpathentry kind="lib" path="/home/heimdall/workspace/LIBS/TC.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

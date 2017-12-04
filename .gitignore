@@ -5,3 +5,6 @@ BestDirection/.idea/*
 data/*
 .metadata/*
 *.jar
+*.class
+*.off
+*/bin/*
