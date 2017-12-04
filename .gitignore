@@ -4,3 +4,4 @@ BestDirection/.idea/*
 *.pdf
 data/*
 .metadata/*
+*.jar
