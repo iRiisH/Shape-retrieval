@@ -132,5 +132,4 @@ public class NormalEstimator {
 		}
 		return normals;
 	}
-
 }
