@@ -1,3 +1,4 @@
+import Jcg.geometry.Point_3;
 import processing.core.*;
 
 /**
@@ -9,13 +10,13 @@ import processing.core.*;
 public class Viewer extends PApplet {
 
 	SurfaceMesh mesh;
-
+	ArcBall arcball;
 	int renderType=0; // choice of type of rendering
 	int renderModes=3; // number of rendering modes
 
 	int simplificationMethod=0;
 	int nMethods=3; // number of simplification methods proposed
-	int model_id = 0;
+	int model_id = 500;
 	static String path = "../../data/benchmark/db/";
 	String filename;
 
@@ -33,23 +34,36 @@ public class Viewer extends PApplet {
 
 		// initialize Arcball
 	  	ArcBall arcball = new ArcBall(this);
-
+	  	this.arcball = arcball;
 		filename = this.get_filename(model_id);
 	  	this.mesh=new SurfaceMesh(this, filename);
+	  	this.mesh.scaleFactor = 500.;
 	}
-
-	public void draw() {
-
-		// set the background color
-	  	background(255);
-
-		// set light
-	  	directionalLight(101, 204, 255, -1, 0, 0);
+	public void drawNormal()
+	{
+		directionalLight(101, 204, 255, -1, 0, 0);
 	  	directionalLight(51, 102, 126, 0, -1, 0);
 	  	directionalLight(51, 102, 126, 0, 0, -1);
 	  	directionalLight(102, 50, 126, 1, 0, 0);
 	  	directionalLight(51, 50, 102, 0, 1, 0);
 	  	directionalLight(51, 50, 102, 0, 0, 1);
+	  	this.mesh.draw();	
+		
+	}
+	public void drawContours(ArcBall.Vec3 direction)
+	{
+		directionalLight(255, 255, 255, -1, 0, 0);
+	  	directionalLight(255, 255, 255, 0, -1, 0);
+	  	directionalLight(255, 255, 255, 0, 0, -1);
+	  	directionalLight(255, 255, 255, 1, 0, 0);
+	  	directionalLight(255, 255, 255, 0, 1, 0);
+	  	directionalLight(255, 255, 255, 0, 0, 1);
+	  	this.mesh.occludingContours(direction);
+	}
+	public void draw() {
+
+		// set the background color
+	  	background(255);
 
 		// set original position
 		/*
@@ -58,12 +72,16 @@ public class Viewer extends PApplet {
 			positive direction z: close (opposite to far)
 		*/
 	  	translate(width/2.f,height/2.f,-1*height/2.f);
-
+	  	Point_3 mean = this.mesh.mean();
+	  	translate(-mean.x.floatValue(), -mean.y.floatValue(), -mean.z.floatValue()); // center model
 		// set stroke style
 	  	this.strokeWeight(1);
 	  	stroke(150,150,150);
-
-	  	this.mesh.draw();
+	  	
+	  	ArcBall.Quat q = this.arcball.q_now;
+	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
+	  	drawContours(direction);
+	  	//this.mesh.draw();
 	}
 
 	public void keyPressed(){
@@ -76,8 +94,8 @@ public class Viewer extends PApplet {
 	 * For running the PApplet as Java application
 	 */
 	public static void main(String args[]) {
-		//PApplet pa=new Viewer();
-		//pa.setSize(400, 400);
+		PApplet pa=new Viewer();
+		pa.setSize(400, 400);
 		PApplet.main(new String[] { "Viewer" });
 	}
 
