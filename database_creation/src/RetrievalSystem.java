@@ -1,6 +1,6 @@
 public class RetrievalSystem{
 
-    public RetrievalSystem(RenderType rt,){
+   /* public RetrievalSystem(RenderType rt,){
 
     }
 
@@ -26,6 +26,6 @@ public class RetrievalSystem{
 
     )
 
-
+*/
 
 }
