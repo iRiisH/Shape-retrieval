@@ -70,6 +70,7 @@ public class ArcBall {
         axis = -1;  // no constraints...
     }
 
+    // mouse event change the state of arcball itself
     public void mouseEvent(MouseEvent event) {
         int id = event.getID();
         if (id == MouseEvent.MOUSE_DRAGGED) {
@@ -79,18 +80,17 @@ public class ArcBall {
             mousePressed();
         }
     }
-
     public void mousePressed() {
         v_down = mouse_to_sphere(parent.mouseX, parent.mouseY);
         q_down.set(q_now);
         q_drag.reset();
     }
-
     public void mouseDragged() {
         v_drag = mouse_to_sphere(parent.mouseX, parent.mouseY);
         q_drag.set(Vec3.dot(v_down, v_drag), Vec3.cross(v_down, v_drag));
     }
 
+    // draw function callback 
     public void pre() {
         parent.translate(center_x, center_y, center_z);
         q_now = Quat.mul(q_drag, q_down);
@@ -98,6 +98,7 @@ public class ArcBall {
         parent.translate(-center_x, -center_y, -center_z);
     }
 
+    // transform coordinates of mouse to sphere
     Vec3 mouse_to_sphere(float x, float y) {
         Vec3 v = new Vec3();
         v.x = (x - center_x) / radius;
