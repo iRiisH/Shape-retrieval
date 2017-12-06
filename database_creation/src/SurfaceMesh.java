@@ -6,7 +6,9 @@ import processing.core.*;
 public class SurfaceMesh {
 
 	double scaleFactor=50; // scaling factor: useful for 3d rendering
+	static double occludingOffset = 0.05;
 	Viewer view;
+
 	public Polyhedron_3<Point_3> polyhedron3D; // triangle mesh
 
 	public Polyhedron_3<Point_3> sv2polyhedron(
@@ -201,7 +203,7 @@ public class SurfaceMesh {
 			if (false
 				// || Math.abs(ze) <= eps
 				// || Math.abs(zo) <= eps
-				|| (ze*zo <= 0.2f && (ze < 0 || zo < 0))) this.drawSegment(u, v);
+				|| (ze*zo <= occludingOffset)) this.drawSegment(u, v);
 		}
 		view.strokeWeight(150);
 

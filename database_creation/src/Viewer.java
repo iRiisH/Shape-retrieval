@@ -5,10 +5,12 @@ public class Viewer extends PApplet {
 
 	static int nModel = 1815;
 	static String path = "../../data/benchmark/db/";
+	static int nMode = 2;
 
 	SurfaceMesh mesh;
 	ArcBall arcball;
 	float scaling = 1.f;
+	int mode = 0;
 
 	int model_id = 333;
 	String filename;
@@ -73,8 +75,11 @@ public class Viewer extends PApplet {
 
 	  	ArcBall.Quat q = this.arcball.q_now;
 	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
-	  	drawContours(direction);
-		// drawNormal();
+
+		if(this.mode==0)
+			drawContours(direction);
+	  	else if(this.mode==1)
+			drawNormal();
 	  	//this.mesh.draw();
 	}
 
@@ -89,6 +94,9 @@ public class Viewer extends PApplet {
 			case('p'):this.model_id=(this.model_id+nModel-1)%nModel;loadModel();break;
 			case('L'):this.scaling *= 1.1;this.mesh.scaleFactor *= 1.1;break;
 			case('S'):this.scaling /= 1.1;this.mesh.scaleFactor /= 1.1;break;
+			case('M'):this.mode = (this.mode+1)%nMode;break;
+			case('O'):SurfaceMesh.occludingOffset *= 1.1;break;
+			case('o'):SurfaceMesh.occludingOffset /= 1.1;break;
 		  }
 	}
 
