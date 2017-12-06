@@ -1,6 +1,4 @@
-import java.util.HashMap;
-import java.util.ArrayList;
-
+import java.util.*;
 import Jcg.geometry.*;
 import Jcg.polyhedron.*;
 import processing.core.*;
@@ -10,6 +8,53 @@ public class SurfaceMesh {
 	double scaleFactor=50; // scaling factor: useful for 3d rendering
 	Viewer view;
 	public Polyhedron_3<Point_3> polyhedron3D; // triangle mesh
+
+	public Polyhedron_3<Point_3> sv2polyhedron(
+			SharedVertexRepresentation sv){
+
+		Polyhedron_3<Point_3> pl;
+		pl = new Polyhedron_3<Point_3>(
+				sv.sizeVertices,
+				sv.sizeHalfedges,
+				sv.sizeFaces);
+
+		// add vertices
+		Point_3[] ps = sv.points;
+		for(int i=0;i<ps.length;i++){
+			pl.vertices.add(new Vertex<Point_3>(ps[i]));
+		}
+
+		// add edges and faces
+		int n = sv.sizeVertices;
+		HashMap<Integer,Halfedge<Point_3> > veMap;
+		veMap = new HashMap<Integer,Halfedge<Point_3> >();
+		int[][] fs = sv.faces;
+		for(int i=0;i<fs.length;i++){
+			Face<Point_3> f = new Face<Point_3>();
+			pl.facets.add(f);
+			ArrayList<Halfedge<Point_3> > hs;
+			hs = new ArrayList<Halfedge<Point_3> >();
+			for(int j=0;j<fs[i].length;j++){
+				Halfedge<Point_3> h = new Halfedge<Point_3>();
+				pl.halfedges.add(h);
+				int s = fs[i][j], t = fs[i][(j+1)%fs[i].length];
+				f.setEdge(h); hs.add(h); veMap.put(n*s+t,h);
+				h.face = f;
+				if(veMap.containsKey(n*t+s)){
+					Halfedge<Point_3> o = veMap.get(n*t+s);
+					o.opposite = h; h.opposite = o;
+				}
+				h.vertex = pl.vertices.get(t);
+			}
+			for(int j=0;j<hs.size();j++){
+				Halfedge<Point_3> prev = hs.get(j);
+				Halfedge<Point_3> next = hs.get((j+1)%hs.size());
+				prev.next = next; next.prev = prev;
+			}
+		}
+		return pl;
+	}
+
 	private Point_3[] points;
 	/**
 	 * Create a surface mesh from an OFF file
@@ -22,9 +67,9 @@ public class SurfaceMesh {
     	SharedVertexRepresentation sharedVertex=new SharedVertexRepresentation(filename);
     	LoadMesh<Point_3> load3D=new LoadMesh<Point_3>();
 
-    	polyhedron3D=load3D.createTriangleMesh(sharedVertex.points,sharedVertex.faceDegrees,
-				sharedVertex.faces,sharedVertex.sizeHalfedges);
-
+    	// polyhedron3D=load3D.createTriangleMesh(sharedVertex.points,sharedVertex.faceDegrees,
+		// 		sharedVertex.faces,sharedVertex.sizeHalfedges);
+		polyhedron3D = sv2polyhedron(sharedVertex);
     	// polyhedron3D.isValid(true);
     	this.points = new Point_3[this.polyhedron3D.vertices.size()];
     	int i = 0;
@@ -105,10 +150,18 @@ public class SurfaceMesh {
 		float[] cur_axis = new float[4]; mat.mult(z_axis,cur_axis);
 		pointOfView = new ArcBall.Vec3(cur_axis[0],cur_axis[1],cur_axis[2]);
 		// pointOfView = new ArcBall.Vec3(0.f,0.f,1.f);
-		view.strokeWeight(5); // line width (for edges)
+		view.strokeWeight(4); // line width (for edges)
 		view.stroke(20);
 		for(Halfedge<Point_3> e: this.polyhedron3D.halfedges) {
-			Halfedge<Point_3> en = e.next, o = e.opposite, on = o.next;
+			Halfedge<Point_3> en = e.next, o = e.opposite, on;
+			if(o==null){
+				while(!en.next.equals(e)){
+					en = en.next;
+				}
+				this.drawSegment(e.vertex.getPoint(), en.vertex.getPoint());
+				continue;
+			}
+			on = o.next;
 			Point_3 u = e.getVertex().getPoint(),  v = o.getVertex().getPoint(),
 			 		w = en.getVertex().getPoint(), t = on.getVertex().getPoint();
 			float[][] coords = new float[4][3];
@@ -148,7 +201,7 @@ public class SurfaceMesh {
 			if (false
 				// || Math.abs(ze) <= eps
 				// || Math.abs(zo) <= eps
-				|| (ze*zo <= 0.f && (ze > 0 || zo > 0))) this.drawSegment(u, v);
+				|| (ze*zo <= 0.2f && (ze < 0 || zo < 0))) this.drawSegment(u, v);
 		}
 		view.strokeWeight(150);
 
@@ -162,9 +215,6 @@ public class SurfaceMesh {
 				h = h.next;
 				if(h.equals(e))break;
 			}
-			// Point_3 p=e.vertex.getPoint();
-			// Point_3 q=e.getNext().vertex.getPoint();
-			// Point_3 r=e.getNext().getNext().vertex.getPoint();
 
 			view.noStroke();
 			view.fill(255,255,255,255); // color of the triangle

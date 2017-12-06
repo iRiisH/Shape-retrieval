@@ -1,31 +1,21 @@
 import Jcg.geometry.Point_3;
 import processing.core.*;
 
-/*
-	TODO
-
-
-
-
-	Jiefeng:
-		Problem: only triangle meshes can be loaded, need to rewrite load mesh function
-*/
 public class Viewer extends PApplet {
+
+	static int nModel = 1815;
+	static String path = "../../data/benchmark/db/";
 
 	SurfaceMesh mesh;
 	ArcBall arcball;
-	int renderType=0; // choice of type of rendering
-	int renderModes=3; // number of rendering modes
+	float scaling = 1.f;
 
-	int simplificationMethod=0;
-	int nMethods=3; // number of simplification methods proposed
-	int model_id = 500;
-	static String path = "../../data/benchmark/db/";
+	int model_id = 333;
 	String filename;
 
-	private static String get_filename(int model_id){
-		String folder = String.valueOf(model_id / 100);
-		String filename = String.valueOf(model_id);
+	private String get_filename(){
+		String folder = String.valueOf(this.model_id / 100);
+		String filename = String.valueOf(this.model_id);
 		return path+folder+"/m"+filename+"/m"+filename+".off";
 	}
 
@@ -34,12 +24,11 @@ public class Viewer extends PApplet {
 
 		// initialize window size
 	  	size(800,600,P3D);
-
+		ortho(-width/2, width/2, -height/2, height/2);
 		// initialize Arcball
 	  	ArcBall arcball = new ArcBall(this);
 	  	this.arcball = arcball;
-		filename = this.get_filename(model_id);
-	  	this.mesh=new SurfaceMesh(this, filename);
+		this.loadModel();
 	  	// this.mesh.scaleFactor = 500.;
 	}
 	public void drawNormal()
@@ -89,9 +78,17 @@ public class Viewer extends PApplet {
 	  	//this.mesh.draw();
 	}
 
+	public void loadModel(){
+	  	this.mesh=new SurfaceMesh(this, this.get_filename());
+		this.mesh.scaleFactor *= this.scaling;
+	}
+
 	public void keyPressed(){
 		  switch(key) {
-			case('r'):this.renderType=(this.renderType+1)%this.renderModes; break;
+			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel();break;
+			case('p'):this.model_id=(this.model_id+nModel-1)%nModel;loadModel();break;
+			case('L'):this.scaling *= 1.1;this.mesh.scaleFactor *= 1.1;break;
+			case('S'):this.scaling /= 1.1;this.mesh.scaleFactor /= 1.1;break;
 		  }
 	}
 
