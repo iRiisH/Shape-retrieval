@@ -1,12 +1,15 @@
 import Jcg.geometry.Point_3;
 import processing.core.*;
 
-/**
- * A simple 3d viewer for visualizing surface meshes
- *
- * @author Luca Castelli Aleardi (INF555, 2012)
- *
- */
+/*
+	TODO
+
+
+
+
+	Jiefeng:
+		Problem: only triangle meshes can be loaded, need to rewrite load mesh function
+*/
 public class Viewer extends PApplet {
 
 	SurfaceMesh mesh;
@@ -37,7 +40,7 @@ public class Viewer extends PApplet {
 	  	this.arcball = arcball;
 		filename = this.get_filename(model_id);
 	  	this.mesh=new SurfaceMesh(this, filename);
-	  	this.mesh.scaleFactor = 500.;
+	  	// this.mesh.scaleFactor = 500.;
 	}
 	public void drawNormal()
 	{
@@ -47,8 +50,8 @@ public class Viewer extends PApplet {
 	  	directionalLight(102, 50, 126, 1, 0, 0);
 	  	directionalLight(51, 50, 102, 0, 1, 0);
 	  	directionalLight(51, 50, 102, 0, 0, 1);
-	  	this.mesh.draw();	
-		
+	  	this.mesh.draw();
+
 	}
 	public void drawContours(ArcBall.Vec3 direction)
 	{
@@ -58,7 +61,8 @@ public class Viewer extends PApplet {
 	  	directionalLight(255, 255, 255, 1, 0, 0);
 	  	directionalLight(255, 255, 255, 0, 1, 0);
 	  	directionalLight(255, 255, 255, 0, 0, 1);
-	  	this.mesh.occludingContours(direction);
+	  	// this.mesh.occludingContours(direction);
+		this.mesh.geniusOcclidingCoutours(direction);
 	}
 	public void draw() {
 
@@ -77,10 +81,11 @@ public class Viewer extends PApplet {
 		// set stroke style
 	  	this.strokeWeight(1);
 	  	stroke(150,150,150);
-	  	
+
 	  	ArcBall.Quat q = this.arcball.q_now;
 	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
 	  	drawContours(direction);
+		// drawNormal();
 	  	//this.mesh.draw();
 	}
 

@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.ArrayList;
 
 import Jcg.geometry.*;
 import Jcg.polyhedron.*;
@@ -24,7 +25,7 @@ public class SurfaceMesh {
     	polyhedron3D=load3D.createTriangleMesh(sharedVertex.points,sharedVertex.faceDegrees,
 				sharedVertex.faces,sharedVertex.sizeHalfedges);
 
-    	polyhedron3D.isValid(false);
+    	// polyhedron3D.isValid(true);
     	this.points = new Point_3[this.polyhedron3D.vertices.size()];
     	int i = 0;
     	for (Vertex<Point_3> v: this.polyhedron3D.vertices)
@@ -48,11 +49,15 @@ public class SurfaceMesh {
 	/**
 	 * Draw a triangle face
 	 */
-	public void drawTriangle(Point_3 p, Point_3 q, Point_3 r) {
+	public void drawTriangle(ArrayList<Point_3> ps) {
 		float s=(float)this.scaleFactor;
-		view.vertex( (float)(p.getX().doubleValue()*s), (float)(p.getY().doubleValue()*s), (float)(p.getZ().doubleValue()*s));
-		view.vertex( (float)(q.getX().doubleValue()*s), (float)(q.getY().doubleValue()*s), (float)(q.getZ().doubleValue()*s));
-		view.vertex( (float)(r.getX().doubleValue()*s), (float)(r.getY().doubleValue()*s), (float)(r.getZ().doubleValue()*s));
+		for(int i=0;i<ps.size()-2;i++){
+			Point_3 p = ps.get(i), q = ps.get(i+1), r = ps.get(i+2);
+			view.vertex( (float)(p.getX().doubleValue()*s), (float)(p.getY().doubleValue()*s), (float)(p.getZ().doubleValue()*s));
+			view.vertex( (float)(q.getX().doubleValue()*s), (float)(q.getY().doubleValue()*s), (float)(q.getZ().doubleValue()*s));
+			view.vertex( (float)(r.getX().doubleValue()*s), (float)(r.getY().doubleValue()*s), (float)(r.getZ().doubleValue()*s));
+		}
+
 	}
 
 
@@ -65,13 +70,20 @@ public class SurfaceMesh {
 		view.beginShape(view.TRIANGLES);
 		for(Face<Point_3> f: this.polyhedron3D.facets) {
 			Halfedge<Point_3> e=f.getEdge();
-			Point_3 p=e.vertex.getPoint();
-			Point_3 q=e.getNext().vertex.getPoint();
-			Point_3 r=e.getNext().getNext().vertex.getPoint();
+			ArrayList<Point_3> ps = new ArrayList<Point_3>();
+			Halfedge<Point_3> h=e;
+			while(true){
+				ps.add(h.vertex.getPoint());
+				h = h.next;
+				if(h.equals(e))break;
+			}
+			// Point_3 p=e.vertex.getPoint();
+			// Point_3 q=e.getNext().vertex.getPoint();
+			// Point_3 r=e.getNext().getNext().vertex.getPoint();
 
 			view.noStroke();
 			view.fill(200,200,200,255); // color of the triangle
-			this.drawTriangle(p, q, r); // draw a triangle face
+			this.drawTriangle(ps); // draw a triangle face
 		}
 		view.endShape();
 
@@ -85,9 +97,84 @@ public class SurfaceMesh {
 		}
 		view.strokeWeight(1);
 	}
-	
+
+	public void geniusOcclidingCoutours(ArcBall.Vec3 pointOfView){
+
+		PMatrix3D mat = (PMatrix3D)this.view.getMatrix(); mat.invert();
+		float[] z_axis = {0.f,0.f,1.f,0.f};
+		float[] cur_axis = new float[4]; mat.mult(z_axis,cur_axis);
+		pointOfView = new ArcBall.Vec3(cur_axis[0],cur_axis[1],cur_axis[2]);
+		// pointOfView = new ArcBall.Vec3(0.f,0.f,1.f);
+		view.strokeWeight(5); // line width (for edges)
+		view.stroke(20);
+		for(Halfedge<Point_3> e: this.polyhedron3D.halfedges) {
+			Halfedge<Point_3> en = e.next, o = e.opposite, on = o.next;
+			Point_3 u = e.getVertex().getPoint(),  v = o.getVertex().getPoint(),
+			 		w = en.getVertex().getPoint(), t = on.getVertex().getPoint();
+			float[][] coords = new float[4][3];
+			coords[0][0] = u.getX().floatValue();
+			coords[0][1] = u.getY().floatValue();
+			coords[0][2] = u.getZ().floatValue();
+			coords[1][0] = v.getX().floatValue();
+			coords[1][1] = v.getY().floatValue();
+			coords[1][2] = v.getZ().floatValue();
+			coords[2][0] = w.getX().floatValue();
+			coords[2][1] = w.getY().floatValue();
+			coords[2][2] = w.getZ().floatValue();
+			coords[3][0] = t.getX().floatValue();
+			coords[3][1] = t.getY().floatValue();
+			coords[3][2] = t.getZ().floatValue();
+			ArcBall.Vec3 ae = new ArcBall.Vec3(
+					coords[0][0]-coords[1][0],
+					coords[0][1]-coords[1][1],
+					coords[0][2]-coords[1][2]);
+			ArcBall.Vec3 be = new ArcBall.Vec3(
+					coords[2][0]-coords[0][0],
+					coords[2][1]-coords[0][1],
+					coords[2][2]-coords[0][2]);
+			ArcBall.Vec3 ao = new ArcBall.Vec3(
+					coords[1][0]-coords[0][0],
+					coords[1][1]-coords[0][1],
+					coords[1][2]-coords[0][2]);
+			ArcBall.Vec3 bo = new ArcBall.Vec3(
+					coords[3][0]-coords[1][0],
+					coords[3][1]-coords[1][1],
+					coords[3][2]-coords[1][2]);
+			ArcBall.Vec3 ce = ArcBall.Vec3.cross(ae,be); ce.normalize();
+			ArcBall.Vec3 co = ArcBall.Vec3.cross(ao,bo); co.normalize();
+			float ze = ArcBall.Vec3.dot(pointOfView,ce);
+			float zo = ArcBall.Vec3.dot(pointOfView,co);
+			float eps = 1E-2f;
+			if (false
+				// || Math.abs(ze) <= eps
+				// || Math.abs(zo) <= eps
+				|| (ze*zo <= 0.f && (ze > 0 || zo > 0))) this.drawSegment(u, v);
+		}
+		view.strokeWeight(150);
+
+		view.beginShape(view.TRIANGLES);
+		for(Face<Point_3> f: this.polyhedron3D.facets) {
+			Halfedge<Point_3> e=f.getEdge();
+			ArrayList<Point_3> ps = new ArrayList<Point_3>();
+			Halfedge<Point_3> h=e;
+			while(true){
+				ps.add(h.vertex.getPoint());
+				h = h.next;
+				if(h.equals(e))break;
+			}
+			// Point_3 p=e.vertex.getPoint();
+			// Point_3 q=e.getNext().vertex.getPoint();
+			// Point_3 r=e.getNext().getNext().vertex.getPoint();
+
+			view.noStroke();
+			view.fill(255,255,255,255); // color of the triangle
+			this.drawTriangle(ps); // draw a triangle face
+		}
+		view.endShape();
+	}
+
 	public void occludingContours(ArcBall.Vec3 pointOfView) {
-		
+
 		double epsilon = 1.;
 		double[][] normals = NormalEstimator.computeNormals(this.points, 30);
 		HashMap<Vertex, ArcBall.Vec3> normals_map = new HashMap<Vertex, ArcBall.Vec3>();
@@ -101,32 +188,32 @@ public class SurfaceMesh {
 			normals_map.put(v, norm);
 			cnt++;
 		}
-		
 
-		view.strokeWeight(2); // line width (for edges)
-		view.stroke(20);
+
+		view.strokeWeight(0); // line width (for edges)
+		view.stroke(0);
 		for(Halfedge<Point_3> e: this.polyhedron3D.halfedges) {
-			
+
 			Vertex<Point_3> p=e.vertex;
 			Vertex<Point_3> q=e.opposite.vertex;
-			if (Math.abs(ArcBall.Vec3.dot(normals_map.get(p), pointOfView)) < epsilon 
+			if (Math.abs(ArcBall.Vec3.dot(normals_map.get(p), pointOfView)) < epsilon
 					&& Math.abs(ArcBall.Vec3.dot(normals_map.get(q), pointOfView)) < epsilon)
 				this.drawSegment(p.getPoint(), q.getPoint()); // draw edge (p,q)
 		}
-		view.strokeWeight(1);
-		
-		view.beginShape(view.TRIANGLES);
-		for(Face<Point_3> f: this.polyhedron3D.facets) {
-			Halfedge<Point_3> e=f.getEdge();
-			Point_3 p=e.vertex.getPoint();
-			Point_3 q=e.getNext().vertex.getPoint();
-			Point_3 r=e.getNext().getNext().vertex.getPoint();
-
-			view.noStroke();
-			view.fill(255,255,255,255); // color of the triangle
-			this.drawTriangle(p, q, r); // draw a triangle face
-		}
-		view.endShape();
+		// view.strokeWeight(1);
+        //
+		// view.beginShape(view.TRIANGLES);
+		// for(Face<Point_3> f: this.polyhedron3D.facets) {
+		// 	Halfedge<Point_3> e=f.getEdge();
+		// 	Point_3 p=e.vertex.getPoint();
+		// 	Point_3 q=e.getNext().vertex.getPoint();
+		// 	Point_3 r=e.getNext().getNext().vertex.getPoint();
+        //
+		// 	view.noStroke();
+		// 	view.fill(255,255,255,255); // color of the triangle
+		// 	this.drawTriangle(p, q, r); // draw a triangle face
+		// }
+		// view.endShape();
 	}
 
 	/**
@@ -164,9 +251,9 @@ public class SurfaceMesh {
 			double distance=Math.sqrt(v.getPoint().squareDistance(origin).doubleValue());
 			maxDistance=Math.max(maxDistance, distance);
 		}
-		return Math.sqrt(3)/maxDistance*150;
+		return Math.sqrt(3)/maxDistance*300;
 	}
-	
+
 	public Point_3 mean()
 	{
 		int n = this.polyhedron3D.vertices.size();
@@ -183,4 +270,3 @@ public class SurfaceMesh {
 		return Point_3.linearCombination(points, coefs);
 	}
 }
-
