@@ -85,11 +85,14 @@ public class SurfaceMesh {
 		}
 		view.strokeWeight(1);
 	}
-	
+	public void drawNormals(HashMap<Vertex, ArcBall.Vec3> normals_map)
+	{
+		//this.drawSegment(v.getPoint(), v.getPoint() + normals_map(v)); // draw edge (p,q)
+	}
 	public void occludingContours(ArcBall.Vec3 pointOfView) {
 		
-		double epsilon = 1.;
-		double[][] normals = NormalEstimator.computeNormals(this.points, 30);
+		double epsilon = .5;
+		double[][] normals = NormalEstimator.computeNormals(this.points, 10);
 		HashMap<Vertex, ArcBall.Vec3> normals_map = new HashMap<Vertex, ArcBall.Vec3>();
 		int cnt = 0;
 		for(Vertex v: this.polyhedron3D.vertices)
