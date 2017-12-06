@@ -161,6 +161,7 @@ public class SurfaceMesh {
 		view.strokeWeight(1);
 	}
 
+
 	public void drawAllTriangles(int v1,int v2,int v3,int v4){
 		view.beginShape(view.TRIANGLES);
 		for(Face<Point_3> f: this.polyhedron3D.facets) {
