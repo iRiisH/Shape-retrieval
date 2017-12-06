@@ -150,7 +150,11 @@ public class SurfaceMesh {
 		view.stroke(20);
 		for(Halfedge<Point_3> e: this.polyhedron3D.halfedges) {
 			Point_3 p=e.vertex.getPoint();
-			Point_3 q=e.opposite.vertex.getPoint();
+			Halfedge<Point_3> h = e;
+			while(!h.next.equals(e)){
+				h = h.next;
+			}
+			Point_3 q=h.vertex.getPoint();
 
 			this.drawSegment(p, q); // draw edge (p,q)
 		}
