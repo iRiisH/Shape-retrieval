@@ -11,8 +11,19 @@ public class SurfaceMesh {
 
 	public Polyhedron_3<Point_3> polyhedron3D; // triangle mesh
 
+	/*
+		get polyhedron_3 from SharedVertexRepresentation:
+
+		1. create new polyhedron_3 instance
+
+		2. add vertices
+
+		3. add edges and faces
+
+	*/
 	public Polyhedron_3<Point_3> sv2polyhedron(
 			SharedVertexRepresentation sv){
+
 
 		Polyhedron_3<Point_3> pl;
 		pl = new Polyhedron_3<Point_3>(
@@ -28,19 +39,20 @@ public class SurfaceMesh {
 
 		// add edges and faces
 		int n = sv.sizeVertices;
-		HashMap<Integer,Halfedge<Point_3> > veMap;
+		HashMap<Integer,Halfedge<Point_3> > veMap; // to find opposite halfedge
+		// use hashing: start_vertex_id * num_vertex + terminal_vertex_id
 		veMap = new HashMap<Integer,Halfedge<Point_3> >();
 		int[][] fs = sv.faces;
 		for(int i=0;i<fs.length;i++){
-			Face<Point_3> f = new Face<Point_3>();
+			Face<Point_3> f = new Face<Point_3>(); // create new face
 			pl.facets.add(f);
-			ArrayList<Halfedge<Point_3> > hs;
+			ArrayList<Halfedge<Point_3> > hs; // to find next and prev halfedge
 			hs = new ArrayList<Halfedge<Point_3> >();
 			for(int j=0;j<fs[i].length;j++){
-				Halfedge<Point_3> h = new Halfedge<Point_3>();
+				Halfedge<Point_3> h = new Halfedge<Point_3>(); // create new halfedge
 				pl.halfedges.add(h);
 				int s = fs[i][j], t = fs[i][(j+1)%fs[i].length];
-				f.setEdge(h); hs.add(h); veMap.put(n*s+t,h);
+				f.setEdge(h);hs.add(h); veMap.put(n*s+t,h);
 				h.face = f;
 				if(veMap.containsKey(n*t+s)){
 					Halfedge<Point_3> o = veMap.get(n*t+s);
@@ -145,6 +157,25 @@ public class SurfaceMesh {
 		view.strokeWeight(1);
 	}
 
+	public void drawAllTriangles(int v1,int v2,int v3,int v4){
+		view.beginShape(view.TRIANGLES);
+		for(Face<Point_3> f: this.polyhedron3D.facets) {
+			Halfedge<Point_3> e=f.getEdge();
+			ArrayList<Point_3> ps = new ArrayList<Point_3>();
+			Halfedge<Point_3> h=e;
+			while(true){
+				ps.add(h.vertex.getPoint());
+				h = h.next;
+				if(h.equals(e))break;
+			}
+
+			view.noStroke();
+			view.fill(v1,v2,v3,v4); // color of the triangle
+			this.drawTriangle(ps); // draw a triangle face
+		}
+		view.endShape();
+	}
+
 	public void geniusOcclidingCoutours(ArcBall.Vec3 pointOfView){
 
 		PMatrix3D mat = (PMatrix3D)this.view.getMatrix(); mat.invert();
@@ -206,23 +237,7 @@ public class SurfaceMesh {
 				|| (ze*zo <= occludingOffset)) this.drawSegment(u, v);
 		}
 		view.strokeWeight(150);
-
-		view.beginShape(view.TRIANGLES);
-		for(Face<Point_3> f: this.polyhedron3D.facets) {
-			Halfedge<Point_3> e=f.getEdge();
-			ArrayList<Point_3> ps = new ArrayList<Point_3>();
-			Halfedge<Point_3> h=e;
-			while(true){
-				ps.add(h.vertex.getPoint());
-				h = h.next;
-				if(h.equals(e))break;
-			}
-
-			view.noStroke();
-			view.fill(255,255,255,255); // color of the triangle
-			this.drawTriangle(ps); // draw a triangle face
-		}
-		view.endShape();
+		this.drawAllTriangles(255,255,255,255);
 	}
 
 	public void occludingContours(ArcBall.Vec3 pointOfView) {
@@ -252,20 +267,8 @@ public class SurfaceMesh {
 					&& Math.abs(ArcBall.Vec3.dot(normals_map.get(q), pointOfView)) < epsilon)
 				this.drawSegment(p.getPoint(), q.getPoint()); // draw edge (p,q)
 		}
-		// view.strokeWeight(1);
-        //
-		// view.beginShape(view.TRIANGLES);
-		// for(Face<Point_3> f: this.polyhedron3D.facets) {
-		// 	Halfedge<Point_3> e=f.getEdge();
-		// 	Point_3 p=e.vertex.getPoint();
-		// 	Point_3 q=e.getNext().vertex.getPoint();
-		// 	Point_3 r=e.getNext().getNext().vertex.getPoint();
-        //
-		// 	view.noStroke();
-		// 	view.fill(255,255,255,255); // color of the triangle
-		// 	this.drawTriangle(p, q, r); // draw a triangle face
-		// }
-		// view.endShape();
+		view.strokeWeight(150);
+		this.drawAllTriangles(255,255,255,255);
 	}
 
 	/**
