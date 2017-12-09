@@ -17,7 +17,9 @@ public class FeatureComputer{
         float fb;
         float ab;
         float cfo,sfo;
-        int rowSample, colSample;
+        int row_sample, col_sample;
+        float feature_size;
+        int n_tile;
 
         public GaborFilter(float prf,float fo,float fb,float ab){
             this.prf = prf;
@@ -116,14 +118,16 @@ public class FeatureComputer{
     }
 
     public FeatureComputer(float[] prfs,float[] fos,float[] fbs,float[] abs,
-            int rowSample, int colSample){
+            int row_sample, int col_sample, float feature_size, int n_tile){
         int l = prfs.length;
         this.gbfs = new GaborFilter[l];
         for(int i=0;i<l;i++){
             this.gbfs[i] = new GaborFilter(prfs[i],fos[i],fbs[i],abs[i]);
         }
-        this.rowSample = rowSample;
-        this.colSample = colSample;
+        this.row_sample = row_sample;
+        this.col_sample = col_sample;
+        this.feature_size = feature_size;
+        this.n_tile = n_tile;
     }
 
     public Mat[][] computeResponseImage(Mat[] ms){
@@ -137,17 +141,45 @@ public class FeatureComputer{
     }
 
     private int[][] computeCoords(int row,int col){
-        throw new Error("Non implemented");
+        int[][] coords = new int[this.row_sample*this.col_sample][4];
+        float dist_row = row * 1.f / this.row_sample;
+        float dist_col = col * 1.f / this.col_sample;
+        float len = (double)Math.sqrt(row * col * this.feature_size);
+        len = Math.min(len,Math.min(dist_row,dist_col));
+        for(int r=0;r<this.row_sample;r++){
+            for(int c=0;c<this.col_sample;c++){
+                coords[r*this.col_sample+c][0] = (int)(dist_row * (.5f + r) - len*.5f);
+                coords[r*this.col_sample+c][1] = (int)(dist_col * (.5f + c) - len*.5f);
+                coords[r*this.col_sample+c][2] = (int)(dist_row * (.5f + r) + len*.5f);
+                coords[r*this.col_sample+c][3] = (int)(dist_col * (.5f + c) + len*.5f);
+            }
+        }
+        return coords;
     }
 
-    private float[][] computeLocalFeatures(rimg,center_pixels){
-        throw new Error("Non implemented");
+    private float[][] computeLocalFeatures(Mat[][] rimg,int[][] frames){
+        float[][][] features;
+        features = new float[rimg.length][frames.length][this.gbfs.length*this.n_tile*this.n_tile];
+        for(int view_id = 0;view_id < rimg.length;view_id++){
+            for(int frame_id = 0;frame_id < frames.length;frame_id++){
+                /*
+                    TODO: Last time work stop HERE
+                    Thinking about eliminating blank local features, change to dynamic dt structure
+                    Thinking about interpolation
+                */
+                int[] curframe = frames[curframe];
+                Rect roi = new Rect(new Point(curframe[0],curframe[1]),new Point(curframe[2],curframe[3]));
+                for(int gbf_id=0;gbf_id < this.gbfs.length;gbf_id++){
+                    Mat submat = mat.submat(roi);
+                }
+            }
+        }
     }
 
     public float[][][] computeFeature(Mat[] ms){
         Mat[][] rimg = this.computeResponseImage(ms);
-        int[][] center_pixels = this.computeCoords(rimg[0].rows(),rimg[0].cols());
-        float[][][] features = computeLocalFeatures(rimg,center_pixels);
+        int[][] frames = this.computeCoords(rimg[0].rows(),rimg[0].cols());
+        float[][][] features = computeLocalFeatures(rimg,frames);
         return features;
     }
 
