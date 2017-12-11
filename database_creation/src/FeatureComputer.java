@@ -140,45 +140,77 @@ public class FeatureComputer{
         return res;
     }
 
-    private int[][] computeCoords(int row,int col){
-        int[][] coords = new int[this.row_sample*this.col_sample][4];
+    private float[][] computeCoords(int row,int col){
+        float[][] coords = new int[this.row_sample*this.col_sample][4];
         float dist_row = row * 1.f / this.row_sample;
         float dist_col = col * 1.f / this.col_sample;
         float len = (double)Math.sqrt(row * col * this.feature_size);
-        len = Math.min(len,Math.min(dist_row,dist_col));
+        // len = Math.min(len,Math.min(dist_row,dist_col));
         for(int r=0;r<this.row_sample;r++){
             for(int c=0;c<this.col_sample;c++){
-                coords[r*this.col_sample+c][0] = (int)(dist_row * (.5f + r) - len*.5f);
-                coords[r*this.col_sample+c][1] = (int)(dist_col * (.5f + c) - len*.5f);
-                coords[r*this.col_sample+c][2] = (int)(dist_row * (.5f + r) + len*.5f);
-                coords[r*this.col_sample+c][3] = (int)(dist_col * (.5f + c) + len*.5f);
+                coords[r*this.col_sample+c][0] = (dist_row * (.5f + r) - len*.5f);
+                coords[r*this.col_sample+c][1] = (dist_col * (.5f + c) - len*.5f);
+                coords[r*this.col_sample+c][2] = (dist_row * (.5f + r) + len*.5f);
+                coords[r*this.col_sample+c][3] = (dist_col * (.5f + c) + len*.5f);
             }
         }
         return coords;
     }
 
-    private float[][] computeLocalFeatures(Mat[][] rimg,int[][] frames){
+    private Rect getRect(int a,int b,int c,int d){
+        return new Rect(new Point(a,b),new Point(c,d));
+    }
+
+    private float[] computeFrameFeatures(float[] cf,Mat[] rimg){
+        float[] res = new float[this.gbfs.length*this.n_tile*this.n_tile];
+        int R = rimg[0].rows(), C = rimg[0].cols();
+        if(cf[0]<0||cf[1]<0||cf[2]>=R||cf[3]>=C)return res;
+        int rs = rimg.length;
+        float wh = (cf[2]-cf[0])/this.n_tile;
+        for(int i=0;i<rs;i++){
+            for(int j=0;j<this.n_tile;j++){
+                for(int k=0;k<this.n_tile;k++){
+                    float u = cf[0]+j*wh, l = cf[1]+k*wh;
+                    float d = cf[0]+(j+1)*wh, r = cf[1]+(k+1)*wh;
+                    float val=0.0;
+                    for(float c1=u;c1<d;c1++){
+                        for(float c2=l;c2<r;c2++){
+                            float c1bed = (int)c1;
+                            float c2bed = (int)c2;
+                            float p1 = c1 - c1bed;
+                            float p2 = c2 - c2bed;
+                            val += p1*p2*rimg[i].get(c1bed,c2bed)[0];
+                            val += (1-p1)*p2*rimg[i].get(c1bed+1,c2bed)[0];
+                            val += p1*(1-p2)*rimg[i].get(c1bed,c2bed+1)[0];
+                            val += (1-p1)*(1-p2)*rimg[i].get(c1bed+1,c2bed+1)[0];
+                        }
+                    }
+                    res[i*this.n_tile*this.n_tile+j*this.n_tile+k] = val;
+                }
+            }
+        }
+        return res;
+    }
+
+    private float[][] computeLocalFeatures(Mat[][] rimg,float[][] frames){
+        /*
+            Output contains blank features
+        */
+
         float[][][] features;
         features = new float[rimg.length][frames.length][this.gbfs.length*this.n_tile*this.n_tile];
         for(int view_id = 0;view_id < rimg.length;view_id++){
             for(int frame_id = 0;frame_id < frames.length;frame_id++){
-                /*
-                    TODO: Last time work stop HERE
-                    Thinking about eliminating blank local features, change to dynamic dt structure
-                    Thinking about interpolation
-                */
-                int[] curframe = frames[curframe];
-                Rect roi = new Rect(new Point(curframe[0],curframe[1]),new Point(curframe[2],curframe[3]));
-                for(int gbf_id=0;gbf_id < this.gbfs.length;gbf_id++){
-                    Mat submat = mat.submat(roi);
-                }
+                float[] cf = frames[curframe];
+                features[view_id][frame_id] = this.computeFrameFeatures(cf,rimg[view_id]);
             }
         }
+        return features;
     }
 
     public float[][][] computeFeature(Mat[] ms){
         Mat[][] rimg = this.computeResponseImage(ms);
-        int[][] frames = this.computeCoords(rimg[0].rows(),rimg[0].cols());
+        float[][] frames = this.computeCoords(rimg[0].rows(),rimg[0].cols());
         float[][][] features = computeLocalFeatures(rimg,frames);
         return features;
     }
