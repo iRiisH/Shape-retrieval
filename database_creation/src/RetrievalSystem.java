@@ -176,22 +176,29 @@ public class RetrievalSystem{
     */
     public void fit(SurfaceMesh[] meshes){
 
+        System.out.println("Fitting...");
+        System.out.println("Computing features for each mesh for each view...");
         float[][][][] local_features;
         local_features = new float[meshes.length][this.num_view][this.num_sample][this.num_features];
 
         for(int mesh_id=0;mesh_id<meshes.length;mesh_id++){
+            System.out.println("Total meshes: %4d, Current mesh id: %4d",meshes.length,mesh_id);
             SurfaceMesh mesh = meshes[mesh_id];
             Mat[] imgs = this.render(mesh);
             local_features[mesh_id] = fc.computeFeature(imgs);
         }
 
+        System.out.println("Sampling features...");
         float[][] sampled_features = this.sampleFeatures(local_features);
+
+        System.out.println("Training K-Means...");
         KMeans kmeans = new KMeans(this.size_vocabulary);
         kmeans.fit(sampled_features);
         System.out.println("KMeans get centroids:");
         kmeans.printCentroids();
         this.centroids = kmeans.centroids;
 
+        System.out.println("Computing histograms for each mesh for each view...");
         this.histograms = new float[meshes.length][this.num_view][this.size_vocabulary];
         for(int i=0;i<meshes.length;i++){
             this.histograms[i] = this.getHistograms(local_features[i]);
