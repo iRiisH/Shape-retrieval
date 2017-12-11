@@ -49,6 +49,14 @@ public class KMeans{
         return false;
     }
 
+    public static float norm2(float[] a){
+        float r = 0.f;
+        for(int i=0;i<a.length;i++){
+            r += (float)Math.pow(a[i],2);
+        }
+        return (float)Math.sqrt(r);
+    }
+
     public static float norm2(float[] a,float[] b){
         float r = 0.f;
         for(int i=0;i<a.length;i++){

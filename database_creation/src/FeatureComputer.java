@@ -2,13 +2,19 @@ import org.opencv.core.*;
 import org.opencv.imgproc.*;
 import org.opencv.imgcodecs.*;
 import java.awt.image.*;
+// import java.awt.image.BufferedImage;
 import java.util.*;
-import java.awt.*;
+// import java.awt.*;
+import java.awt.Image;
+import java.awt.FlowLayout;
 import javax.swing.*;
 
 public class FeatureComputer{
 
     public GaborFilter[] gbfs;
+    public int row_sample, col_sample;
+    public float feature_size;
+    public int n_tile;
 
     private class GaborFilter{
 
@@ -17,9 +23,7 @@ public class FeatureComputer{
         float fb;
         float ab;
         float cfo,sfo;
-        int row_sample, col_sample;
-        float feature_size;
-        int n_tile;
+
 
         public GaborFilter(float prf,float fo,float fb,float ab){
             this.prf = prf;
@@ -141,10 +145,10 @@ public class FeatureComputer{
     }
 
     private float[][] computeCoords(int row,int col){
-        float[][] coords = new int[this.row_sample*this.col_sample][4];
+        float[][] coords = new float[this.row_sample*this.col_sample][4];
         float dist_row = row * 1.f / this.row_sample;
         float dist_col = col * 1.f / this.col_sample;
-        float len = (double)Math.sqrt(row * col * this.feature_size);
+        float len = (float)Math.sqrt(row * col * this.feature_size);
         // len = Math.min(len,Math.min(dist_row,dist_col));
         for(int r=0;r<this.row_sample;r++){
             for(int c=0;c<this.col_sample;c++){
@@ -172,17 +176,17 @@ public class FeatureComputer{
                 for(int k=0;k<this.n_tile;k++){
                     float u = cf[0]+j*wh, l = cf[1]+k*wh;
                     float d = cf[0]+(j+1)*wh, r = cf[1]+(k+1)*wh;
-                    float val=0.0;
+                    float val=0.f;
                     for(float c1=u;c1<d;c1++){
                         for(float c2=l;c2<r;c2++){
-                            float c1bed = (int)c1;
-                            float c2bed = (int)c2;
+                            int c1bed = (int)c1;
+                            int c2bed = (int)c2;
                             float p1 = c1 - c1bed;
                             float p2 = c2 - c2bed;
-                            val += p1*p2*rimg[i].get(c1bed,c2bed)[0];
-                            val += (1-p1)*p2*rimg[i].get(c1bed+1,c2bed)[0];
-                            val += p1*(1-p2)*rimg[i].get(c1bed,c2bed+1)[0];
-                            val += (1-p1)*(1-p2)*rimg[i].get(c1bed+1,c2bed+1)[0];
+                            val += (float)(p1*p2*rimg[i].get(c1bed,c2bed)[0]);
+                            val += (float)((1-p1)*p2*rimg[i].get(c1bed+1,c2bed)[0]);
+                            val += (float)(p1*(1-p2)*rimg[i].get(c1bed,c2bed+1)[0]);
+                            val += (float)((1-p1)*(1-p2)*rimg[i].get(c1bed+1,c2bed+1)[0]);
                         }
                     }
                     res[i*this.n_tile*this.n_tile+j*this.n_tile+k] = val;
@@ -192,7 +196,7 @@ public class FeatureComputer{
         return res;
     }
 
-    private float[][] computeLocalFeatures(Mat[][] rimg,float[][] frames){
+    private float[][][] computeLocalFeatures(Mat[][] rimg,float[][] frames){
         /*
             Output contains blank features
         */
@@ -201,7 +205,7 @@ public class FeatureComputer{
         features = new float[rimg.length][frames.length][this.gbfs.length*this.n_tile*this.n_tile];
         for(int view_id = 0;view_id < rimg.length;view_id++){
             for(int frame_id = 0;frame_id < frames.length;frame_id++){
-                float[] cf = frames[curframe];
+                float[] cf = frames[frame_id];
                 features[view_id][frame_id] = this.computeFrameFeatures(cf,rimg[view_id]);
             }
         }
@@ -210,7 +214,7 @@ public class FeatureComputer{
 
     public float[][][] computeFeature(Mat[] ms){
         Mat[][] rimg = this.computeResponseImage(ms);
-        float[][] frames = this.computeCoords(rimg[0].rows(),rimg[0].cols());
+        float[][] frames = this.computeCoords(rimg[0][0].rows(),rimg[0][0].cols());
         float[][][] features = computeLocalFeatures(rimg,frames);
         return features;
     }
@@ -273,7 +277,7 @@ public class FeatureComputer{
         float[] fos = {(float)Math.PI/4.f};
         float[] fbs = {5.f};
         float[] abs = {10.f};
-        FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs);
+        FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
         Mat[][] ms = fc.computeResponseImage(m);
         // displayMat(ms[0][0]);
         return;
