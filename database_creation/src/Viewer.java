@@ -12,7 +12,7 @@ public class Viewer extends PApplet {
 	float scaling = 1.f;
 	int mode = 0;
 
-	int model_id = 243;
+	int model_id = 333;
 	String filename;
 
 	private String get_filename(){

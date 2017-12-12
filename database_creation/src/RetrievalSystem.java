@@ -182,7 +182,7 @@ public class RetrievalSystem{
         local_features = new float[meshes.length][this.num_view][this.num_sample][this.num_features];
 
         for(int mesh_id=0;mesh_id<meshes.length;mesh_id++){
-            System.out.println("Total meshes: %4d, Current mesh id: %4d",meshes.length,mesh_id);
+            System.out.format("Total meshes: %4d, Current mesh id: %4d\n",meshes.length,mesh_id);
             SurfaceMesh mesh = meshes[mesh_id];
             Mat[] imgs = this.render(mesh);
             local_features[mesh_id] = fc.computeFeature(imgs);
