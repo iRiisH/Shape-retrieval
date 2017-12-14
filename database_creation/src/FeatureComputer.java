@@ -1,3 +1,4 @@
+import processing.core.*;
 import org.opencv.core.*;
 import org.opencv.imgproc.*;
 import org.opencv.imgcodecs.*;
@@ -272,13 +273,28 @@ public class FeatureComputer{
 
     public static void main(String[] args){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-        Mat[] m = {Imgcodecs.imread("two-nodes.png",Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)};
-        float[] prfs = {0.1f};
-        float[] fos = {(float)Math.PI/4.f};
-        float[] fbs = {5.f};
-        float[] abs = {10.f};
-        FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
-        Mat[][] ms = fc.computeResponseImage(m);
+
+        Viewer viewer = new Viewer();
+        viewer.setSize(400, 400);
+		PApplet.main(new String[] { "Viewer" });
+        PImage img = viewer.get();
+        // PImage img_ = img.get();
+        BufferedImage bimg = (BufferedImage)img.getImage();
+        byte[] pixels = ((DataBufferByte) bimg.getRaster().getDataBuffer())
+            .getData();
+
+        // Create a Matrix the same size of image
+        Mat image = new Mat(bimg.getHeight(), bimg.getWidth(), CvType.CV_8UC3);
+        // Fill Matrix with image values
+        image.put(0, 0, pixels);
+        displayMat(image);
+        // Mat[] m = {Imgcodecs.imread("two-nodes.png",Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)};
+        // float[] prfs = {0.1f};
+        // float[] fos = {(float)Math.PI/4.f};
+        // float[] fbs = {5.f};
+        // float[] abs = {10.f};
+        // FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
+        // Mat[][] ms = fc.computeResponseImage(m);
         // displayMat(ms[0][0]);
         return;
     }

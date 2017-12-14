@@ -107,6 +107,7 @@ public class Viewer extends PApplet {
 		PApplet pa=new Viewer();
 		pa.setSize(400, 400);
 		PApplet.main(new String[] { "Viewer" });
+
 	}
 
 }
