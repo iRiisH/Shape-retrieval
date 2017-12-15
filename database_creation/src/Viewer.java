@@ -201,8 +201,6 @@ public class Viewer extends PApplet {
 		  }
 	}
 
-
-
 	/**
 	 * For running the PApplet as Java application
 	 */
