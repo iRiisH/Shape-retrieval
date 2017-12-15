@@ -1,10 +1,19 @@
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+
 import Jcg.geometry.Point_3;
 import processing.core.*;
+
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.CvType;
+import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
 
 public class Viewer extends PApplet {
 
 	static int nModel = 1815;
-	static String path = "../../data/benchmark/db/";
+	static String path = "../data/benchmark/db/";
 	static int nMode = 2;
 
 	SurfaceMesh mesh;
@@ -12,7 +21,7 @@ public class Viewer extends PApplet {
 	float scaling = 1.f;
 	int mode = 0;
 
-	int model_id = 333;
+	int model_id = 332;
 	String filename;
 
 	private String get_filename(){
@@ -55,6 +64,52 @@ public class Viewer extends PApplet {
 	  	// this.mesh.occludingContours(direction);
 		this.mesh.geniusOcclidingCoutours(direction);
 	}
+	
+	Mat toMat(PImage image)
+	// converts processing PImage to openCV Mat
+	{
+		int w = image.width;
+		int h = image.height;
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		Mat mat = new Mat(h, w, CvType.CV_8UC4);
+		Mat res = new Mat(h, w, CvType.CV_8UC3);
+		byte[] data8 = new byte[w*h*4];
+		int[] data32 = new int[w*h];
+		PApplet.arrayCopy(image.pixels, data32);
+		
+		ByteBuffer bBuf = ByteBuffer.allocate(w*h*4);
+		IntBuffer iBuf = bBuf.asIntBuffer();
+		iBuf.put(data32);
+		bBuf.get(data8);
+		mat.put(0, 0, data8);
+		for (int i= 0 ; i < w ; i++)
+		{
+			for (int j = 0 ; j < h ; j++)
+			{
+				double[] pix = mat.get(j, i);
+				double[] new_pix = {pix[3], pix[2], pix[1]};
+				res.put(j, i, new_pix);
+			}
+		}
+		return res;
+	}
+
+	
+	PImage toPImage(Mat mat) 
+	{
+		// TODO: correct this
+		int w = mat.width();
+		int h = mat.height();
+		  
+		PImage image = createImage(w, h, PApplet.ARGB);
+		byte[] data8 = new byte[w*h*4];
+		int[] data32 = new int[w*h];
+		mat.get(0, 0, data8);
+		ByteBuffer.wrap(data8).asIntBuffer().get(data32);
+		PApplet.arrayCopy(data32, image.pixels);
+		return image;
+	}
+	
 	public void draw() {
 
 		// set the background color
@@ -80,7 +135,8 @@ public class Viewer extends PApplet {
 			drawContours(direction);
 	  	else if(this.mode==1)
 			drawNormal();
-	  	//this.mesh.draw();
+		
+		//this.mesh.draw();
 	}
 
 	public void loadModel(){
@@ -88,6 +144,14 @@ public class Viewer extends PApplet {
 		this.mesh.scaleFactor *= this.scaling;
 	}
 
+	public void save()
+	{
+		PImage screen = get();
+		Mat test = toMat(screen);
+		Highgui.imwrite("test.png", test);
+		//screen.save("test.png");
+	}
+	
 	public void keyPressed(){
 		  switch(key) {
 			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel();break;
@@ -96,9 +160,12 @@ public class Viewer extends PApplet {
 			case('S'):this.scaling /= 1.1;this.mesh.scaleFactor /= 1.1;break;
 			case('M'):this.mode = (this.mode+1)%nMode;break;
 			case('O'):SurfaceMesh.occludingOffset *= 1.1;break;
+			case('s'):this.save();break;
 			case('o'):SurfaceMesh.occludingOffset /= 1.1;break;
 		  }
 	}
+	
+	
 
 	/**
 	 * For running the PApplet as Java application
@@ -106,7 +173,20 @@ public class Viewer extends PApplet {
 	public static void main(String args[]) {
 		PApplet pa=new Viewer();
 		pa.setSize(400, 400);
+		System.out.println("beginning");
+		System.out.println("Working Directory = " +
+	              System.getProperty("user.dir"));
+		
 		PApplet.main(new String[] { "Viewer" });
+		PImage pi = pa.createImage(400, 400, RGB);
+		pi.save("test.png");
+		for (int i = 0 ; i < pi.width ; i++)
+		{
+			for(int j = 0 ; j< pi.height ; j++)
+			{
+				int c = pi.get(i, j);
+				//System.out.print(c);
+			}
+		}
 	}
-
 }
