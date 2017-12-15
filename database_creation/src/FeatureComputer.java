@@ -1,7 +1,7 @@
 import processing.core.*;
 import org.opencv.core.*;
 import org.opencv.imgproc.*;
-import org.opencv.imgcodecs.*;
+import org.opencv.highgui.*;
 import java.awt.image.*;
 // import java.awt.image.BufferedImage;
 import java.util.*;
@@ -43,14 +43,14 @@ public class FeatureComputer{
             ArrayList<Mat> planes = new ArrayList<Mat>();
             int addPixelRows = Core.getOptimalDFTSize(image.rows());
             int addPixelCols = Core.getOptimalDFTSize(image.cols());
-            Core.copyMakeBorder(
+            Imgproc.copyMakeBorder(
                     image,
                     padded,
                     0,
                     addPixelRows - image.rows(),
                     0,
-                    addPixelCols - image.cols(),
-                    Core.BORDER_CONSTANT,
+                    addPixelCols - image.cols(), 
+                    Imgproc.BORDER_CONSTANT,
                     Scalar.all(0));
             padded.convertTo(padded, CvType.CV_32F);
             planes.add(padded);
@@ -286,6 +286,15 @@ public class FeatureComputer{
 
     public static void main(String[] args){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+<<<<<<< HEAD
+        Mat[] m = {Highgui.imread("two-nodes.png",Highgui.CV_LOAD_IMAGE_GRAYSCALE)};
+        float[] prfs = {0.1f};
+        float[] fos = {(float)Math.PI/4.f};
+        float[] fbs = {5.f};
+        float[] abs = {10.f};
+        FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
+        Mat[][] ms = fc.computeResponseImage(m);
+=======
 
         Viewer viewer = new Viewer();
         viewer.setSize(400, 400);
@@ -308,6 +317,7 @@ public class FeatureComputer{
         // float[] abs = {10.f};
         // FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
         // Mat[][] ms = fc.computeResponseImage(m);
+>>>>>>> 753241a3cbd9ce9efb4a8e24c6a430e4cadd4fc9
         // displayMat(ms[0][0]);
         return;
     }
