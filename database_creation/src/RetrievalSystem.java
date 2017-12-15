@@ -77,12 +77,16 @@ public class RetrievalSystem{
         float prf = omega0;
         float fb = stroke_width * omega;
         float ab = fb / lambda;
-        float[] prfs = {prf,prf,prf,prf};
+        
+     	
+        
+    	float[] theta = {0.f, (float)(Math.PI/4.), (float)(2.*Math.PI/4.), (float)(3.*Math.PI/4.)};
+    	
+        /*float[] prfs = {prf,prf,prf,prf};
         float[] fos = {0.f,(float)Math.PI*.25f,(float)Math.PI*.5f,(float)Math.PI*.75f};
         float[] fbs = {fb,fb,fb,fb};
-        float[] abs = {ab,ab,ab,ab};
-        this.fc = new FeatureComputer(
-                prfs,fos,fbs,abs,
+        float[] abs = {ab,ab,ab,ab};*/
+        this.fc = new FeatureComputer(theta,
                 this.num_row_sample,
                 this.num_col_sample,
                 this.feature_size,
@@ -113,7 +117,7 @@ public class RetrievalSystem{
         this.size_vocabulary = size_vocabulary;
         float[][] params = this.getInitalKernelParams();
         this.fc = new FeatureComputer(
-                params[0],params[1],params[2],params[3],
+                params[1],
                 this.num_row_sample,this.num_col_sample,this.feature_size,this.n_tile);
         this.viewer = viewer;
         this.angles = this.getAngles();

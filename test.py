@@ -26,6 +26,7 @@ def gabor_fn(sigma, theta, Lambda, psi, gamma):
 
 def convolve():
 	gb = gabor_fn(2, 0.5, 0.4, 0., 1.)	
+	print(gb.shape)
 	# gb = gabor_fn(3., 0.5, 0.43, 0., 1.)
 	img = misc.imread('views_8.jpg', 'L')
 	res = signal.convolve(img, gb)
