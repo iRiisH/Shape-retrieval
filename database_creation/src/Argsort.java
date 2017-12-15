@@ -8,7 +8,6 @@ public class Argsort{
         public ArgsortElement(int i,float e){
             this.id = i; this.val = e;
         }
-        @Override
         public int compareTo(ArgsortElement others){
             if (this.val - others.val < 0.f) return -1;
             if (this.val - others.val == 0.f) return 0;

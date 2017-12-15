@@ -2,10 +2,9 @@ import processing.core.*;
 import org.opencv.core.*;
 import org.opencv.imgproc.*;
 import org.opencv.highgui.*;
+
 import java.awt.image.*;
-// import java.awt.image.BufferedImage;
 import java.util.*;
-// import java.awt.*;
 import java.awt.Image;
 import java.awt.FlowLayout;
 import javax.swing.*;
@@ -19,23 +18,23 @@ public class FeatureComputer{
 
     private class GaborFilter{
 
-        float prf;
-        float fo;
-        float fb;
-        float ab;
-        float cfo,sfo;
+    	double sigma, theta, Lambda, psi, gamma;
 
-
-        public GaborFilter(float prf,float fo,float fb,float ab){
-            this.prf = prf;
-            this.fo = fo;
-            this.cfo = (float)Math.cos(fo);
-            this.sfo = (float)Math.sin(fo);
-            this.fb = fb;
-            this.ab = ab;
+   
+    	
+        public GaborFilter(double sigma, double theta, double Lambda, double psi, double gamma){
+            this.sigma = sigma;
+            this.theta = theta;
+            this.Lambda = Lambda;
+            this.psi = psi;
+            this.gamma = gamma;
         }
 
-        private Mat DFT(Mat image, int inverse){
+        private Mat DFT(Mat image, int inverse)
+        /* 
+         * discrete Fourier transform of image
+         */
+        {
             Mat padded = new Mat();
             Mat complexImage = new Mat();
             Mat mag = new Mat();
@@ -70,8 +69,77 @@ public class FeatureComputer{
             }
 
         }
+        
+        private double[][] gabor_field()
+        {
+        	double sigma_x = this.sigma;
+        	double sigma_y = this.sigma / this.gamma;
 
-        private float Gabor_func(float u,float v){
+
+        	int nstds = 5; //Number of standard deviation sigma
+        	double xmax = Math.max(Math.abs(nstds * sigma_x * Math.cos(this.theta)), Math.abs(nstds * sigma_y * Math.sin(this.theta)));
+        	int xmax_i = (int)Math.ceil(Math.max(1, xmax));
+        	double ymax = Math.max(Math.abs(nstds * sigma_x * Math.sin(this.theta)), Math.abs(nstds * sigma_y * Math.cos(this.theta)));
+        	int ymax_i = (int)Math.ceil(Math.max(1, ymax));
+        	int xmin_i = -xmax_i;
+        	int ymin_i = -ymax_i;
+        	double[][] result = new double[xmax_i+1-xmin_i][ymax_i+1-ymin_i];
+        	for (int i = xmin_i ; i < xmax_i+1 ; i++)
+        	{
+        		for (int j = ymin_i ; j < ymax_i+1 ; j++)
+        		{
+        			double y = (double)j;
+        			double x = (double)i;
+        			// Rotation 
+        		    double x_theta = x * Math.cos(this.theta) + y * Math.sin(this.theta);
+        		    double y_theta = -x * Math.sin(this.theta) + y * Math.cos(this.theta);
+        		    double gb = Math.exp(-.5 * (Math.pow(x_theta,  2.) / Math.pow(sigma_x, 2.) + Math.pow(y_theta, 2.) /
+        		    		Math.pow(sigma_y,2.))) * Math.cos(2 * Math.PI / this.Lambda * x_theta + this.psi);
+        		    result[i+xmax_i][j+ymax_i] = gb;
+
+        		}
+        	}
+        	
+        	return result;
+        }
+        
+        private double secured_val(Mat img, int i, int j)
+        // returns the value at pixel (i, j), 0. if outside image bounds.
+        // Assumes the image is grayscale
+        {
+        	int h = img.height(), w = img.width();
+        	if (i < 0 || i >= h || j < 0 || j >= w)
+        		return 0.;
+        	double[] pix = img.get(i, j);
+        	return pix[0]; // if the image is indeed grayscale all values should be equal       	
+        }
+        
+        
+        private double[][] convolve(Mat img, double[][] gabor)
+        /*
+         * convolves img with gabor filter
+         */
+        {
+        	int h = img.height(), w = img.width();
+        	double[][] arr = new double[h][w];
+        	for (int i = 0 ; i < h ; i++)
+        	{
+        		for (int j = 0 ; j < w ; j++)
+        		{
+        			arr[i][j] = img.get(i, j)[0];
+        		}
+        	}
+        	
+        	System.out.println(h);
+        	System.out.println(w);
+        	System.out.println(gabor.length);
+        	System.out.println(gabor[0].length);
+        	
+        	return Convolution.convolution2D(arr, h, w, gabor, gabor.length, gabor[0].length);
+        }
+        
+        /*private float Gabor_func(float u,float v)
+        {
             float _u = cfo * u - sfo * v;
             float _v = sfo * u + cfo * v;
             float res = 256*(float)Math.exp(-2.f*Math.pow(Math.PI,2)
@@ -88,22 +156,36 @@ public class FeatureComputer{
                     // System.out.println(R);
                     // System.out.println(c);
                     // System.out.println(C);
-                    float val = this.Gabor_func((r/1.f/R),(c/1.f/C));
+                    float val = this.Gabor_func((r/1.f/R*2.f-1.f),(c/1.f/C*2.f-1.f));
                     float[] vals = {val,val};
                     kernel.put(r,c,vals);
                     double[] pixel = kernel.get(r,c);
                     // for(int i=0;i<pixel.length;i++){
                     //     System.out.print(pixel[i]);
                     //     System.out.print(' ');
-                    // }
+                    // }double[]
                     // System.out.println("ed");
                 }
             }
             return kernel;
-        }
+        }*/
 
-        public Mat apply(Mat image){
-            Range range = new Range(0,image.rows());
+        public Mat apply(Mat image)
+        {
+           	double[][] kernel = this.gabor_field();
+        	double[][] res = this.convolve(image, kernel);
+        	int h = res.length, w = res[0].length;
+        	Mat res_ = new Mat(h, w, CvType.CV_64FC1);
+        	for (int i = 0 ; i  < h ; i++)
+        	{
+        		for (int j = 0 ; j < w ; j++)
+        		{
+        			res_.put(i, j, res[i][j]);
+        		}
+        	}
+        	return res_;
+        	
+            /*Range range = new Range(0,image.rows());
             Mat dft_I = new Mat(image,range);
             Mat idft_I = new Mat(image,range);
             Mat kernel = new Mat(image,range);
@@ -114,16 +196,19 @@ public class FeatureComputer{
             // displayMat(ks.get(0));
             idft_I = this.DFT(dft_I.mul(kernel),Core.DFT_INVERSE);
             // displayMat(idft_I);
-            return idft_I;
+            return idft_I;*/
         }
     }
 
-    public FeatureComputer(float[] prfs,float[] fos,float[] fbs,float[] abs,
-            int row_sample, int col_sample, float feature_size, int n_tile){
-        int l = prfs.length;
+    public FeatureComputer(float[] theta, int row_sample, int col_sample, float feature_size, int n_tile){
+    	double sigma = 2.;
+    	double lambda = 0.43;
+    	double psi = 0.;
+    	double gamma = 1.;
+        int l = theta.length;
         this.gbfs = new GaborFilter[l];
         for(int i=0;i<l;i++){
-            this.gbfs[i] = new GaborFilter(prfs[i],fos[i],fbs[i],abs[i]);
+            this.gbfs[i] = new GaborFilter(sigma, (double)theta[i], lambda, psi, gamma);
         }
         this.row_sample = row_sample;
         this.col_sample = col_sample;
@@ -178,6 +263,12 @@ public class FeatureComputer{
                 this.getRect(icf[0],icf[1]+1,icf[2],icf[3]+1),
                 this.getRect(icf[0]+1,icf[1]+1,icf[2]+1,icf[3]+1)};
         for(int i=0;i<rs;i++){
+        	/*int[][] non_zero_coord = non_zero_pix.get(i);
+        	int x_min = rimg[i].width(), x_max = 0, y_min = rimg[i].height(), y_max = 0;
+        	for (int k = 0 ; k < rimg[i].width ; k++)
+        	{
+        		
+        	}*/
             Mat ul = new Mat(rimg[i],rects[0]);
             Mat dl = new Mat(rimg[i],rects[1]);
             Mat ur = new Mat(rimg[i],rects[2]);
@@ -226,7 +317,32 @@ public class FeatureComputer{
         return features;
     }
 
-    public float[][][] computeFeature(Mat[] ms){
+    public float[][][] computeFeature(Mat[] ms)
+    {
+    	/*int n_imgs = ms.length;
+    	LinkedList<int[][]> non_zero_pix = new LinkedList<int[][]>();
+    	for (int i = 0 ; i < ms.length; i++)
+    	{
+    		int w = ms[i].width(), h = ms[i].height();
+    		LinkedList<int[]> ll = new LinkedList<int[]>();
+    		int[][] non_zero_coord;
+    		for (int k = 0 ; k < w ; k++)
+    		{
+    			for (int l = 0 ; l < h ; l++)
+    			{
+    				double[] pix = ms[i].get(k, l);
+    				if (pix[0] > 0.)
+    				{
+    					int[] coord = {k, l};
+    					ll.add(coord);
+    				}
+    			}
+    			int n_non_zero = ll.size();
+    			non_zero_coord = ll.toArray(new int[n_non_zero][2]);
+    			non_zero_pix.add(non_zero_coord);
+    			System.out.println(n_non_zero);
+    		}
+    	}*/
         Mat[][] rimg = this.computeResponseImage(ms);
         float[][] frames = this.computeCoords(rimg[0][0].rows(),rimg[0][0].cols());
         float[][][] features = computeLocalFeatures(rimg,frames);
@@ -282,43 +398,5 @@ public class FeatureComputer{
         }
         System.out.println();
         System.exit(0);
-    }
-
-    public static void main(String[] args){
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-// <<<<<<< HEAD
-        Mat[] m = {Highgui.imread("two-nodes.png",Highgui.CV_LOAD_IMAGE_GRAYSCALE)};
-        float[] prfs = {0.1f};
-        float[] fos = {(float)Math.PI/4.f};
-        float[] fbs = {5.f};
-        float[] abs = {10.f};
-        FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
-        Mat[][] ms = fc.computeResponseImage(m);
-// =======
-
-        Viewer viewer = new Viewer();
-        viewer.setSize(400, 400);
-		PApplet.main(new String[] { "Viewer" });
-        PImage img = viewer.get();
-        // PImage img_ = img.get();
-        BufferedImage bimg = (BufferedImage)img.getImage();
-        byte[] pixels = ((DataBufferByte) bimg.getRaster().getDataBuffer())
-            .getData();
-
-        // Create a Matrix the same size of image
-        Mat image = new Mat(bimg.getHeight(), bimg.getWidth(), CvType.CV_8UC3);
-        // Fill Matrix with image values
-        image.put(0, 0, pixels);
-        displayMat(image);
-        // Mat[] m = {Imgcodecs.imread("two-nodes.png",Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)};
-        // float[] prfs = {0.1f};
-        // float[] fos = {(float)Math.PI/4.f};
-        // float[] fbs = {5.f};
-        // float[] abs = {10.f};
-        // FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
-        // Mat[][] ms = fc.computeResponseImage(m);
-// >>>>>>> 753241a3cbd9ce9efb4a8e24c6a430e4cadd4fc9
-        // displayMat(ms[0][0]);
-        return;
     }
 }

@@ -3,9 +3,7 @@ import java.nio.IntBuffer;
 
 import Jcg.geometry.Point_3;
 import processing.core.*;
-// <<<<<<< HEAD
 import org.opencv.core.*;
-// =======
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -13,13 +11,12 @@ import org.opencv.core.CvType;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
-// >>>>>>> 444d7758767f0eeccd8b7421b6bac791f682e2aa
 public class Viewer extends PApplet {
 
-	static int nModel = 1815;
+	static int nModel = 2;
 	static String path = "../data/benchmark/db/";
 	static int nMode = 2;
-	static float stroke_width = 4.f;
+	static float stroke_width = 3.f;
 	SurfaceMesh mesh;
 	ArcBall arcball;
 	float scaling = 1.f;
@@ -45,7 +42,7 @@ public class Viewer extends PApplet {
 
 		// initialize window size
 	  	size(800,600,P3D);
-		// ortho(-width/2, width/2, -height/2, height/2);
+
 		// initialize Arcball
 
 		ArcBall arcball = new ArcBall(this);
@@ -57,9 +54,11 @@ public class Viewer extends PApplet {
 			files[i] = id_to_path(i);
 		}
 		rs.fit(files);
-
-
-		this.loadModel();
+		Mat[] test = {new Mat()};
+		test[0] = Highgui.imread("./bin/views/views_4.jpg");
+		System.out.println(test[0].size());
+		System.out.println(rs.predict(test, 1)[0][0]);
+		this.loadModel(this.get_filename());
 	  	// this.mesh.scaleFactor = 500.;
 	}
 	public void drawNormal()
@@ -73,7 +72,7 @@ public class Viewer extends PApplet {
 	  	this.mesh.draw();
 
 	}
-	public void drawContours(ArcBall.Vec3 direction)
+	public void drawContours()
 	{
 		try{
 			directionalLight(255, 255, 255, -1, 0, 0);
@@ -83,10 +82,21 @@ public class Viewer extends PApplet {
 		  	directionalLight(255, 255, 255, 0, 1, 0);
 		  	directionalLight(255, 255, 255, 0, 0, 1);
 		} catch(Exception e){}
+		ArcBall.Quat q = this.arcball.q_now;
+	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
 	  	// this.mesh.occludingContours(direction);
 		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
+	
+	public PImage get_contours()
+	{
+		drawContours();
+		return this.get();
+	}
+	
 
+	
+	
 	Mat toMat(PImage image)
 	// converts processing PImage to openCV Mat
 	{
@@ -154,9 +164,8 @@ public class Viewer extends PApplet {
 			positive direction y: down (opposite to up)
 			positive direction z: close (opposite to far)
 		*/
-	  	translate(0.f,0.f,-2*height/1.f);
-	  	ArcBall.Quat q = this.arcball.q_now;
-	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
+	  	translate(0.f,0.f,-2.f*height);
+	  	
 		if(this.angle!=null){
 			this.rotateX(angle[0]);
 			this.rotateY(angle[1]);
@@ -167,15 +176,15 @@ public class Viewer extends PApplet {
 	  	this.strokeWeight(1);
 	  	stroke(150,150,150);
 		if(this.mode==0)
-			drawContours(direction);
+			drawContours();
 	  	else if(this.mode==1)
 			drawNormal();
 
 		//this.mesh.draw();
 	}
 
-	public void loadModel(){
-	  	this.mesh=new SurfaceMesh(this, this.get_filename());
+	public void loadModel(String filename){
+	  	this.mesh=new SurfaceMesh(this, filename);
 		this.mesh.scaleFactor *= this.scaling;
 	}
 
@@ -190,8 +199,8 @@ public class Viewer extends PApplet {
 
 	public void keyPressed(){
 		  switch(key) {
-			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel();break;
-			case('p'):this.model_id=(this.model_id+nModel-1)%nModel;loadModel();break;
+			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel(this.get_filename());break;
+			case('p'):this.model_id=(this.model_id+nModel-1)%nModel;loadModel(this.get_filename());break;
 			case('L'):this.scaling *= 1.1;this.mesh.scaleFactor *= 1.1;break;
 			case('S'):this.scaling /= 1.1;this.mesh.scaleFactor /= 1.1;break;
 			case('M'):this.mode = (this.mode+1)%nMode;break;
@@ -217,13 +226,6 @@ public class Viewer extends PApplet {
 
 		PImage pi = pa.createImage(400, 400, RGB);
 		pi.save("test.png");
-		for (int i = 0 ; i < pi.width ; i++)
-		{
-			for(int j = 0 ; j< pi.height ; j++)
-			{
-				int c = pi.get(i, j);
-				//System.out.print(c);
-			}
-		}
+
 	}
 }
