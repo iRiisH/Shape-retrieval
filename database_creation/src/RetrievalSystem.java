@@ -1,7 +1,9 @@
 import org.opencv.core.*;
 import processing.core.*;
 import org.opencv.imgproc.*;
-import org.opencv.imgcodecs.*;
+import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
+
 import java.util.*;
 import java.io.*;
 import java.awt.image.*;
@@ -119,8 +121,9 @@ public class RetrievalSystem{
 
     private float[][] getAngles(){
         // float[][] angles = {{0.f,0.f,0.f}};
-        // this.num_views = 1;
-        float[][] angles = new float[48][3];
+        this.num_views = 22;
+    	float[][] angles = ReadViews.cart2cam(ReadViews.read_views(this.num_views));
+        /* 
         for(int i=0;i<48;i++){
             angles[i][2] = (float)(2. * Math.PI * i / 8.);
         }
@@ -132,6 +135,7 @@ public class RetrievalSystem{
             angles[i][0] = (float)(((i-24)/8+1)*2.0*Math.PI/4.0);
             angles[i][1] = 0.f;
         }
+        */
         return angles;
     }
 
@@ -180,7 +184,7 @@ public class RetrievalSystem{
                                     PImage2Image(this.viewer.get()))),
                     views[i],Imgproc.COLOR_RGB2GRAY);
             Core.bitwise_not(views[i],views[i]);
-            Imgcodecs.imwrite("views/views_"+String.valueOf(i)+".jpg",views[i]);
+            Highgui.imwrite("bin/views/views_"+String.valueOf(i)+".jpg",views[i]);
         }
         return views;
     }

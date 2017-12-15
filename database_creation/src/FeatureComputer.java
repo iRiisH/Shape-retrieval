@@ -2,6 +2,7 @@ import processing.core.*;
 import org.opencv.core.*;
 import org.opencv.imgproc.*;
 import org.opencv.highgui.*;
+
 import java.awt.image.*;
 // import java.awt.image.BufferedImage;
 import java.util.*;
@@ -88,14 +89,14 @@ public class FeatureComputer{
                     // System.out.println(R);
                     // System.out.println(c);
                     // System.out.println(C);
-                    float val = this.Gabor_func((r/1.f/R),(c/1.f/C));
+                    float val = this.Gabor_func((r/1.f/R*2.f-1.f),(c/1.f/C*2.f-1.f));
                     float[] vals = {val,val};
                     kernel.put(r,c,vals);
                     double[] pixel = kernel.get(r,c);
                     // for(int i=0;i<pixel.length;i++){
                     //     System.out.print(pixel[i]);
                     //     System.out.print(' ');
-                    // }
+                    // }double[]
                     // System.out.println("ed");
                 }
             }
@@ -178,6 +179,12 @@ public class FeatureComputer{
                 this.getRect(icf[0],icf[1]+1,icf[2],icf[3]+1),
                 this.getRect(icf[0]+1,icf[1]+1,icf[2]+1,icf[3]+1)};
         for(int i=0;i<rs;i++){
+        	/*int[][] non_zero_coord = non_zero_pix.get(i);
+        	int x_min = rimg[i].width(), x_max = 0, y_min = rimg[i].height(), y_max = 0;
+        	for (int k = 0 ; k < rimg[i].width ; k++)
+        	{
+        		
+        	}*/
             Mat ul = new Mat(rimg[i],rects[0]);
             Mat dl = new Mat(rimg[i],rects[1]);
             Mat ur = new Mat(rimg[i],rects[2]);
@@ -226,8 +233,35 @@ public class FeatureComputer{
         return features;
     }
 
-    public float[][][] computeFeature(Mat[] ms){
+    public float[][][] computeFeature(Mat[] ms)
+    {
+    	/*int n_imgs = ms.length;
+    	LinkedList<int[][]> non_zero_pix = new LinkedList<int[][]>();
+    	for (int i = 0 ; i < ms.length; i++)
+    	{
+    		int w = ms[i].width(), h = ms[i].height();
+    		LinkedList<int[]> ll = new LinkedList<int[]>();
+    		int[][] non_zero_coord;
+    		for (int k = 0 ; k < w ; k++)
+    		{
+    			for (int l = 0 ; l < h ; l++)
+    			{
+    				double[] pix = ms[i].get(k, l);
+    				if (pix[0] > 0.)
+    				{
+    					int[] coord = {k, l};
+    					ll.add(coord);
+    				}
+    			}
+    			int n_non_zero = ll.size();
+    			non_zero_coord = ll.toArray(new int[n_non_zero][2]);
+    			non_zero_pix.add(non_zero_coord);
+    			System.out.println(n_non_zero);
+    		}
+    	}*/
         Mat[][] rimg = this.computeResponseImage(ms);
+        for (int i = 0 ; i < rimg[0].length; i++)
+        	displayMat(rimg[0][i]);
         float[][] frames = this.computeCoords(rimg[0][0].rows(),rimg[0][0].cols());
         float[][][] features = computeLocalFeatures(rimg,frames);
         return features;
