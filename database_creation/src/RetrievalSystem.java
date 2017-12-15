@@ -43,6 +43,8 @@ public class RetrievalSystem{
 
     Viewer viewer;
 
+    float[][] angles = null;
+
     public RetrievalSystem(Viewer viewer){
         float stroke_width = Viewer.stroke_width;
         float omega = .02f, lambda = .3f, omega0 = .13f;
@@ -69,6 +71,7 @@ public class RetrievalSystem{
                 this.feature_size,
                 this.n_tile);
         this.viewer = viewer;
+        this.angles = this.getAngles();
     }
 
     public RetrievalSystem(
@@ -96,13 +99,28 @@ public class RetrievalSystem{
                 params[0],params[1],params[2],params[3],
                 this.num_row_sample,this.num_col_sample,this.feature_size,this.n_tile);
         this.viewer = viewer;
+        this.angles = this.getAngles();
+    }
+
+    private float[][] getAngles(){
+        throw new Error("Non implemented");
+    }
+
+    public static Mat PImage2Mat(PImage img){
+        throw new Error("Non implemented");
     }
 
     /*
         receive a SurfaceMesh and compute its views
     */
-    private Mat[] render(SurfaceMesh mesh){
-        throw new Error("non implemented");
+    private Mat[] render(){
+        Mat[] views = new Mat[this.num_views];
+        for(int i=0;i<this.num_views;i++){
+            this.viewer.setAngle(this.angles[i]);
+            this.viewer.draw();
+            views[i] = PImage2Mat(this.viewer.copy());
+        }
+        return views;
     }
 
 
@@ -215,8 +233,8 @@ public class RetrievalSystem{
 
         for(int mesh_id=0;mesh_id<files.length;mesh_id++){
             System.out.format("Total meshes: %4d, Current mesh id: %4d\n",files.length,mesh_id);
-            SurfaceMesh mesh = new SurfaceMesh(this.viewer,files[mesh_id]);
-            Mat[] imgs = this.render(mesh);
+            this.viewer.loadModel(files[mesh_id]);
+            Mat[] imgs = this.render();
             local_features[mesh_id] = fc.computeFeature(imgs);
         }
 

@@ -14,6 +14,7 @@ public class Viewer extends PApplet {
 
 	int model_id = 333;
 	String filename;
+	RetrievalSystem rs;
 
 	public static String id_to_path(int id){
 		String folder = String.valueOf(id / 100);
@@ -32,6 +33,14 @@ public class Viewer extends PApplet {
 	  	size(800,600,P3D);
 		ortho(-width/2, width/2, -height/2, height/2);
 		// initialize Arcball
+
+		this.rs = new RetrievalSystem(this);
+		String[] files = new String[nModel];
+		for(int i=0;i<nModel;i++){
+			files[i] = id_to_path(i);
+		}
+		rs.fit(files);
+
 	  	ArcBall arcball = new ArcBall(this);
 	  	this.arcball = arcball;
 		this.loadModel();
@@ -59,6 +68,11 @@ public class Viewer extends PApplet {
 	  	// this.mesh.occludingContours(direction);
 		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
+
+	public void setAngle(){
+		throw new Error("Non implemented");
+	}
+
 	public void draw() {
 
 		// set the background color
@@ -92,6 +106,10 @@ public class Viewer extends PApplet {
 		this.mesh.scaleFactor *= this.scaling;
 	}
 
+	public void loadModel(String filename){
+		this.mesh=new SurfaceMesh(this, filename);
+		this.mesh.scaleFactor *= this.scaling;
+	}
 	public void keyPressed(){
 		  switch(key) {
 			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel();break;
