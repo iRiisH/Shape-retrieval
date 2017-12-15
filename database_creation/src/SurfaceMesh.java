@@ -181,14 +181,14 @@ public class SurfaceMesh {
 		view.endShape();
 	}
 
-	public void geniusOcclidingCoutours(ArcBall.Vec3 pointOfView){
+	public void geniusOcclidingCoutours(ArcBall.Vec3 pointOfView,float stroke_width){
 
 		PMatrix3D mat = (PMatrix3D)this.view.getMatrix(); mat.invert();
 		float[] z_axis = {0.f,0.f,1.f,0.f};
 		float[] cur_axis = new float[4]; mat.mult(z_axis,cur_axis);
 		pointOfView = new ArcBall.Vec3(cur_axis[0],cur_axis[1],cur_axis[2]);
 		// pointOfView = new ArcBall.Vec3(0.f,0.f,1.f);
-		view.strokeWeight(4); // line width (for edges)
+		view.strokeWeight(stroke_width); // line width (for edges)
 		view.stroke(20);
 		for(Halfedge<Point_3> e: this.polyhedron3D.halfedges) {
 			Halfedge<Point_3> en = e.next, o = e.opposite, on;
@@ -237,8 +237,6 @@ public class SurfaceMesh {
 			float zo = ArcBall.Vec3.dot(pointOfView,co);
 			float eps = 1E-2f;
 			if (false
-				// || Math.abs(ze) <= eps
-				// || Math.abs(zo) <= eps
 				|| (ze*zo <= occludingOffset)) this.drawSegment(u, v);
 		}
 		view.strokeWeight(150);

@@ -4,7 +4,7 @@ import java.util.*;
 public class RetrievalSystem{
 
     // number of views per mesh
-    int num_view;
+    int num_views;
 
     // when sampling subimages to compute local features
     // number of rows
@@ -24,7 +24,7 @@ public class RetrievalSystem{
     float feature_size;
 
     // fraction of features used to train Kmeans
-    float kmeans_train_size;
+    int kmeans_train_size;
 
     // dimension of a feature vector (that used for Kmeans)
     int num_features;
@@ -41,6 +41,36 @@ public class RetrievalSystem{
     // feature computer class to compute feature vectors from views
     FeatureComputer fc;
 
+    Viewer viewer;
+
+    public RetrievalSystem(Viewer viewer){
+        float stroke_width = Viewer.stroke_width;
+        float omega = .02f, lambda = .3f, omega0 = .13f;
+        this.num_kernels = 4;
+        this.n_tile = 4;
+        this.feature_size = 0.2f;
+        this.size_vocabulary = 2500;
+        this.num_views = 100;
+        this.num_row_sample = 32;
+        this.num_col_sample = 32;
+        this.num_sample = this.num_row_sample * this.num_col_sample;
+        this.kmeans_train_size = (int)1E6;
+        float prf = omega0;
+        float fb = stroke_width * omega;
+        float ab = fb / lambda;
+        float[] prfs = {prf,prf,prf,prf};
+        float[] fos = {0.f,(float)Math.PI*.25f,(float)Math.PI*.5f,(float)Math.PI*.75f};
+        float[] fbs = {fb,fb,fb,fb};
+        float[] abs = {ab,ab,ab,ab};
+        this.fc = new FeatureComputer(
+                prfs,fos,fbs,abs,
+                this.num_row_sample,
+                this.num_col_sample,
+                this.feature_size,
+                this.n_tile);
+        this.viewer = viewer;
+    }
+
     public RetrievalSystem(
             int num_view_per_img,
             int num_row_sample_per_view,
@@ -48,9 +78,10 @@ public class RetrievalSystem{
             int num_kernels,
             int n_tile,
             float feature_size,
-            float kmeans_train_size,
-            int size_vocabulary){
-        this.num_view = num_view_per_img;
+            int kmeans_train_size,
+            int size_vocabulary,
+            Viewer viewer){
+        this.num_views = num_view_per_img;
         this.num_row_sample = num_row_sample_per_view;
         this.num_col_sample = num_col_sample_per_view;
         this.num_sample = this.num_row_sample * this.num_col_sample;
@@ -64,6 +95,7 @@ public class RetrievalSystem{
         this.fc = new FeatureComputer(
                 params[0],params[1],params[2],params[3],
                 this.num_row_sample,this.num_col_sample,this.feature_size,this.n_tile);
+        this.viewer = viewer;
     }
 
     /*
@@ -96,8 +128,8 @@ public class RetrievalSystem{
     */
     private float[][] sampleFeatures(float[][][][] local_features){
         int num_mesh = local_features.length;
-        int total_local_features = num_mesh * this.num_view * this.num_sample;
-        int train_size = (int)(total_local_features * this.kmeans_train_size);
+        int total_local_features = num_mesh * this.num_views * this.num_sample;
+        int train_size = this.kmeans_train_size;
         float[][] sampled_features = new float[train_size][this.num_features];
         ArrayList<Integer> ids = new ArrayList<Integer>(total_local_features);
         for(int i=0;i<total_local_features;i++){ids.add(i);}
@@ -106,8 +138,8 @@ public class RetrievalSystem{
             if(pos>=ids.size()) throw new Error("Too much zero features!");
             while(true){
                 int cur = ids.get(pos);
-                int a = cur/this.num_view/this.num_sample;
-                int b = cur%this.num_view/this.num_sample;
+                int a = cur/this.num_views/this.num_sample;
+                int b = cur%this.num_views/this.num_sample;
                 int c = cur%this.num_sample;
                 if(isZeros(local_features[a][b][c]))pos++;
                 else{
@@ -147,10 +179,10 @@ public class RetrievalSystem{
         transform histograms to TFIDF weights
     */
     private void TFIDF(float[][][] histograms){
-        float num_documents = histograms.length * this.num_view;
+        float num_documents = histograms.length * this.num_views;
         float[] freq_documents = new float[this.size_vocabulary];
         for(int i=0;i<histograms.length;i++){
-            for(int j=0;j<this.num_view;j++){
+            for(int j=0;j<this.num_views;j++){
                 for(int k=0;k<this.size_vocabulary;k++){
                     if(histograms[i][j][k]>0.f){
                         freq_documents[k]++;
@@ -159,7 +191,7 @@ public class RetrievalSystem{
             }
         }
         for(int i=0;i<histograms.length;i++){
-            for(int j=0;j<this.num_view;j++){
+            for(int j=0;j<this.num_views;j++){
                 float num_words = 0.f;
                 for(int k=0;k<this.size_vocabulary;k++){
                     num_words += histograms[i][j][k];
@@ -174,16 +206,16 @@ public class RetrievalSystem{
     /*
         fit function of retrieval system
     */
-    public void fit(SurfaceMesh[] meshes){
+    public void fit(String[] files){
 
         System.out.println("Fitting...");
         System.out.println("Computing features for each mesh for each view...");
         float[][][][] local_features;
-        local_features = new float[meshes.length][this.num_view][this.num_sample][this.num_features];
+        local_features = new float[files.length][this.num_views][this.num_sample][this.num_features];
 
-        for(int mesh_id=0;mesh_id<meshes.length;mesh_id++){
-            System.out.format("Total meshes: %4d, Current mesh id: %4d\n",meshes.length,mesh_id);
-            SurfaceMesh mesh = meshes[mesh_id];
+        for(int mesh_id=0;mesh_id<files.length;mesh_id++){
+            System.out.format("Total meshes: %4d, Current mesh id: %4d\n",files.length,mesh_id);
+            SurfaceMesh mesh = new SurfaceMesh(this.viewer,files[mesh_id]);
             Mat[] imgs = this.render(mesh);
             local_features[mesh_id] = fc.computeFeature(imgs);
         }
@@ -199,8 +231,8 @@ public class RetrievalSystem{
         this.centroids = kmeans.centroids;
 
         System.out.println("Computing histograms for each mesh for each view...");
-        this.histograms = new float[meshes.length][this.num_view][this.size_vocabulary];
-        for(int i=0;i<meshes.length;i++){
+        this.histograms = new float[files.length][this.num_views][this.size_vocabulary];
+        for(int i=0;i<files.length;i++){
             this.histograms[i] = this.getHistograms(local_features[i]);
         }
         this.TFIDF(this.histograms);
@@ -228,7 +260,7 @@ public class RetrievalSystem{
         for(int i=0;i<histos.length;i++){
             for(int j=0;j<num_meshes;j++){
                 float mxsim = this.cosineSimilarity(this.histograms[j][0],histos[i]);
-                for(int k=1;k<this.num_view;k++){
+                for(int k=1;k<this.num_views;k++){
                     mxsim = Math.max(mxsim,this.cosineSimilarity(this.histograms[j][k],histos[i]));
                 }
                 sims[i][j] = mxsim;
@@ -238,19 +270,12 @@ public class RetrievalSystem{
     }
 
     /*
-        argsort
-    */
-    private int[] argsort(float[] arr){
-        throw new Error("Not implemented");
-    }
-
-    /*
         give predictions according to similarities
     */
     private int[][] similarities2Predictions(float[][] sims,int num_predictions){
         int[][] predictions = new int[sims.length][num_predictions];
         for(int i=0;i<sims.length;i++){
-            int[] ranks = this.argsort(sims[i]);
+            int[] ranks = new Argsort(sims[i]).sorted_ids;
             for(int j=0;j<num_predictions;j++){
                 predictions[i][j] = ranks[j];
             }

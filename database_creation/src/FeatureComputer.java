@@ -88,7 +88,7 @@ public class FeatureComputer{
                     // System.out.println(R);
                     // System.out.println(c);
                     // System.out.println(C);
-                    float val = this.Gabor_func((r/1.f/R)*.125f,(c/1.f/C-1.f)*.125f);
+                    float val = this.Gabor_func((r/1.f/R),(c/1.f/C));
                     float[] vals = {val,val};
                     kernel.put(r,c,vals);
                     double[] pixel = kernel.get(r,c);

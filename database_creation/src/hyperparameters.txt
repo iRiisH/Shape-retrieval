@@ -1,0 +1,26 @@
+feature_size
+0.2
+
+size_vocabulary
+2500
+
+num_views
+100
+
+line_types
+occludingContours
+
+linewidth = frequency bandwidth / sketchline width
+0.02
+
+lambda = frequency bandwidth / angular bandwidth
+0.3
+
+peak response frequency
+0.13
+
+num_kernels
+4
+
+n_tile
+4

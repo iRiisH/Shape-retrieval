@@ -6,7 +6,7 @@ public class Viewer extends PApplet {
 	static int nModel = 1815;
 	static String path = "../../data/benchmark/db/";
 	static int nMode = 2;
-
+	static float stroke_width = 4.f;
 	SurfaceMesh mesh;
 	ArcBall arcball;
 	float scaling = 1.f;
@@ -15,10 +15,14 @@ public class Viewer extends PApplet {
 	int model_id = 333;
 	String filename;
 
-	private String get_filename(){
-		String folder = String.valueOf(this.model_id / 100);
-		String filename = String.valueOf(this.model_id);
+	public static String id_to_path(int id){
+		String folder = String.valueOf(id / 100);
+		String filename = String.valueOf(id);
 		return path+folder+"/m"+filename+"/m"+filename+".off";
+	}
+
+	private String get_filename(){
+		return id_to_path(this.model_id);
 	}
 
 	// initialization
@@ -53,7 +57,7 @@ public class Viewer extends PApplet {
 	  	directionalLight(255, 255, 255, 0, 1, 0);
 	  	directionalLight(255, 255, 255, 0, 0, 1);
 	  	// this.mesh.occludingContours(direction);
-		this.mesh.geniusOcclidingCoutours(direction);
+		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
 	public void draw() {
 
