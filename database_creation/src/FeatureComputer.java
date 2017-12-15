@@ -111,13 +111,9 @@ public class FeatureComputer{
             kernel = this.getKernel(dft_I);
             ArrayList<Mat> ks = new ArrayList<Mat>();
             Core.split(kernel,ks);
-            displayMat(ks.get(0));
+            // displayMat(ks.get(0));
             idft_I = this.DFT(dft_I.mul(kernel),Core.DFT_INVERSE);
-            // idft_I = this.DFT(dft_I,Core.DFT_INVERSE);
-            // printMat(kernel);
-            // displayMat(kernel);
-            // printMat(kernel);
-            // Core.dft( idft_I, Core.DFT_INVERSE, 0);
+            // displayMat(idft_I);
             return idft_I;
         }
     }
@@ -137,8 +133,10 @@ public class FeatureComputer{
 
     public Mat[][] computeResponseImage(Mat[] ms){
         Mat[][] res = new Mat[ms.length][gbfs.length];
+        System.out.println("Computing response images...");
         for(int k=0;k<ms.length;k++){
             for(int i=0;i<gbfs.length;i++){
+                System.out.println("View id "+String.valueOf(k)+" Filter id "+String.valueOf(i));
                 res[k][i] = gbfs[i].apply(ms[k]);
             }
         }
@@ -168,26 +166,39 @@ public class FeatureComputer{
 
     private float[] computeFrameFeatures(float[] cf,Mat[] rimg){
         float[] res = new float[this.gbfs.length*this.n_tile*this.n_tile];
-        int R = rimg[0].rows(), C = rimg[0].cols();
-        if(cf[0]<0||cf[1]<0||cf[2]>=R||cf[3]>=C)return res;
+        int R = rimg[0].cols(), C = rimg[0].rows();
+        if(cf[0]<0||cf[1]<0||cf[2]+1>=R||cf[3]+1>=C)return res;
         int rs = rimg.length;
         float wh = (cf[2]-cf[0])/this.n_tile;
+        float p1 = cf[0] - (int)cf[0], p2 = cf[1] - (int)cf[1];
+        int[] icf = {(int)cf[0],(int)cf[1],(int)cf[2],(int)cf[3]};
+        Rect[] rects = {
+                this.getRect(icf[0],icf[1],icf[2],icf[3]),
+                this.getRect(icf[0]+1,icf[1],icf[2]+1,icf[3]),
+                this.getRect(icf[0],icf[1]+1,icf[2],icf[3]+1),
+                this.getRect(icf[0]+1,icf[1]+1,icf[2]+1,icf[3]+1)};
         for(int i=0;i<rs;i++){
+            Mat ul = new Mat(rimg[i],rects[0]);
+            Mat dl = new Mat(rimg[i],rects[1]);
+            Mat ur = new Mat(rimg[i],rects[2]);
+            Mat dr = new Mat(rimg[i],rects[3]);
+            Mat piece = new Mat();
+            Core.multiply(ul,new Scalar(p1*p2),ul);
+            Core.multiply(dl,new Scalar((1-p1)*p2),ul);
+            Core.multiply(ur,new Scalar(p1*(1-p2)),ul);
+            Core.multiply(dr,new Scalar((1-p1)*(1-p2)),ul);
+            Core.add(ul,dl,piece);
+            Core.add(piece,ur,piece);
+            Core.add(piece,dr,piece);
+            if(Core.minMaxLoc(piece).maxVal<1.0)continue;
             for(int j=0;j<this.n_tile;j++){
                 for(int k=0;k<this.n_tile;k++){
-                    float u = cf[0]+j*wh, l = cf[1]+k*wh;
-                    float d = cf[0]+(j+1)*wh, r = cf[1]+(k+1)*wh;
+                    int u = icf[0]+(int)(j*wh), l = icf[1]+(int)(k*wh);
+                    int d = Math.min(icf[0]+(int)((j+1)*wh),icf[2]+1), r = Math.min(icf[1]+(int)((k+1)*wh),icf[3]+1);
                     float val=0.f;
-                    for(float c1=u;c1<d;c1++){
-                        for(float c2=l;c2<r;c2++){
-                            int c1bed = (int)c1;
-                            int c2bed = (int)c2;
-                            float p1 = c1 - c1bed;
-                            float p2 = c2 - c2bed;
-                            val += (float)(p1*p2*rimg[i].get(c1bed,c2bed)[0]);
-                            val += (float)((1-p1)*p2*rimg[i].get(c1bed+1,c2bed)[0]);
-                            val += (float)(p1*(1-p2)*rimg[i].get(c1bed,c2bed+1)[0]);
-                            val += (float)((1-p1)*(1-p2)*rimg[i].get(c1bed+1,c2bed+1)[0]);
+                    for(int c1=u;c1<d;c1++){
+                        for(int c2=l;c2<r;c2++){
+                            val += (float)piece.get(c1-u,c2-l)[0];
                         }
                     }
                     res[i*this.n_tile*this.n_tile+j*this.n_tile+k] = val;
@@ -204,8 +215,10 @@ public class FeatureComputer{
 
         float[][][] features;
         features = new float[rimg.length][frames.length][this.gbfs.length*this.n_tile*this.n_tile];
+        System.out.println("Computing local features...");
         for(int view_id = 0;view_id < rimg.length;view_id++){
             for(int frame_id = 0;frame_id < frames.length;frame_id++){
+                System.out.println("\rView id "+String.valueOf(view_id)+" frame id "+String.valueOf(frame_id));
                 float[] cf = frames[frame_id];
                 features[view_id][frame_id] = this.computeFrameFeatures(cf,rimg[view_id]);
             }

@@ -1,9 +1,11 @@
 import org.opencv.core.*;
 import processing.core.*;
+import org.opencv.imgproc.*;
+import org.opencv.imgcodecs.*;
 import java.util.*;
+import java.io.*;
 import java.awt.image.*;
 // import java.awt.image.BufferedImage;
-import java.util.*;
 // import java.awt.*;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -54,6 +56,9 @@ public class RetrievalSystem{
 
     float[][] angles = null;
 
+    static String raw_features_prefix = "raw_features/model_";
+    static String raw_features_suffix = ".txt";
+
     public RetrievalSystem(Viewer viewer){
         float stroke_width = Viewer.stroke_width;
         float omega = .02f, lambda = .3f, omega0 = .13f;
@@ -61,11 +66,12 @@ public class RetrievalSystem{
         this.n_tile = 4;
         this.feature_size = 0.2f;
         this.size_vocabulary = 2500;
-        this.num_views = 100;
+        this.num_views = 48;
         this.num_row_sample = 32;
         this.num_col_sample = 32;
         this.num_sample = this.num_row_sample * this.num_col_sample;
         this.kmeans_train_size = (int)1E6;
+        this.num_features = this.num_kernels * this.n_tile * this.n_tile;
         float prf = omega0;
         float fb = stroke_width * omega;
         float ab = fb / lambda;
@@ -112,7 +118,21 @@ public class RetrievalSystem{
     }
 
     private float[][] getAngles(){
-        throw new Error("Non implemented");
+        // float[][] angles = {{0.f,0.f,0.f}};
+        // this.num_views = 1;
+        float[][] angles = new float[48][3];
+        for(int i=0;i<48;i++){
+            angles[i][2] = (float)(2. * Math.PI * i / 8.);
+        }
+        for(int i=0;i<24;i++){
+            angles[i][0] = 0.f;
+            angles[i][1] = (float)((i/8-1)*2.0*Math.PI/4.0);
+        }
+        for(int i=24;i<48;i++){
+            angles[i][0] = (float)(((i-24)/8+1)*2.0*Math.PI/4.0);
+            angles[i][1] = 0.f;
+        }
+        return angles;
     }
 
     /*
@@ -133,8 +153,9 @@ public class RetrievalSystem{
         return image;
     }
     public static BufferedImage Image2BufferedImage(Image im){
-        BufferedImage bi = new BufferedImage
-        (im.getWidth(null),im.getHeight(null),BufferedImage.TYPE_INT_RGB);
+        BufferedImage bi = new BufferedImage(
+                im.getWidth(null),im.getHeight(null),
+                BufferedImage.TYPE_3BYTE_BGR);
          Graphics bg = bi.getGraphics();
          bg.drawImage(im, 0, 0, null);
          bg.dispose();
@@ -152,9 +173,14 @@ public class RetrievalSystem{
         for(int i=0;i<this.num_views;i++){
             this.viewer.setAngle(this.angles[i]);
             this.viewer.draw();
-            views[i] = BufferedImage2Mat(
-                    Image2BufferedImage(
-                            PImage2Image(this.viewer.get())));
+            views[i] = new Mat();
+            Imgproc.cvtColor(
+                    BufferedImage2Mat(
+                            Image2BufferedImage(
+                                    PImage2Image(this.viewer.get()))),
+                    views[i],Imgproc.COLOR_RGB2GRAY);
+            Core.bitwise_not(views[i],views[i]);
+            Imgcodecs.imwrite("views/views_"+String.valueOf(i)+".jpg",views[i]);
         }
         return views;
     }
@@ -180,8 +206,7 @@ public class RetrievalSystem{
     /*
         sample (v.) features from a set of features
     */
-    private float[][] sampleFeatures(float[][][][] local_features){
-        int num_mesh = local_features.length;
+    private float[][] sampleFeatures(int num_mesh){
         int total_local_features = num_mesh * this.num_views * this.num_sample;
         int train_size = this.kmeans_train_size;
         float[][] sampled_features = new float[train_size][this.num_features];
@@ -195,9 +220,10 @@ public class RetrievalSystem{
                 int a = cur/this.num_views/this.num_sample;
                 int b = cur%this.num_views/this.num_sample;
                 int c = cur%this.num_sample;
-                if(isZeros(local_features[a][b][c]))pos++;
+                float[] local_feature = this.readRawFeatures(a,b,c);
+                if(isZeros(local_feature))pos++;
                 else{
-                    sampled_features[i] = local_features[a][b][c];
+                    sampled_features[i] = local_feature;
                     break;
                 }
             }
@@ -257,6 +283,74 @@ public class RetrievalSystem{
         }
     }
 
+    private String getRawFeatureFilename(int id){
+        return raw_features_prefix+String.valueOf(id)+raw_features_suffix;
+    }
+
+    private void saveRawFeatures(int id,float[][][] features){
+        PrintWriter writer = null;
+        try{
+            writer = new PrintWriter(this.getRawFeatureFilename(id), "UTF-8");
+        } catch(Exception e){System.out.println(e);System.exit(0);}
+        writer.println(String.valueOf(this.num_views)+" "
+                +String.valueOf(this.num_sample)+" "
+                +String.valueOf(this.num_features));
+        for(int i=0;i<this.num_views;i++){
+            for(int j=0;j<this.num_sample;j++){
+                String f = "";
+                for(int k=0;k<this.num_features;k++){
+                    f += String.valueOf(features[i][j][k])+" ";
+                }
+                writer.println(f);
+            }
+        }
+        writer.close();
+    }
+
+    private float[][][] readRawFeatures(int mesh_id){
+
+        String filename = this.getRawFeatureFilename(mesh_id);
+        // FileReader reads text files in the default encoding.
+        // Always wrap FileReader in BufferedReader.
+
+        float[][][] res = null;
+        try{
+            FileReader fileReader = new FileReader(filename);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+            String[] line = bufferedReader.readLine().split("\\s");
+            int n_v = Integer.parseInt(line[0]);
+            int n_s = Integer.parseInt(line[1]);
+            int n_f = Integer.parseInt(line[2]);
+            res = new float[n_v][n_s][n_f];
+            for(int i=0;i<n_v;i++){
+                for(int j=0;j<n_s;j++){
+                    line = bufferedReader.readLine().split("\\s");
+                    for(int k=0;k<n_f;k++){
+                        res[i][j][k] = Integer.parseInt(line[k]);
+                    }
+                }
+            }
+            bufferedReader.close();
+        } catch(Exception e){System.out.println(e);System.exit(0);}
+       // Always close files.
+       return res;
+
+    }
+
+    private float[] readRawFeatures(int i,int j,int k){
+        throw new Error("not implemented");
+        // try{
+        //     Stream<String> lines = Files.lines(Paths.get(this.getRawFeatureFilename(i)));
+        //     line = lines.skip(j*this.num_sample+k).findFirst().get().split("\\s");
+        //     float[] res = new float[this.num_features];
+        //     for(int l=0;l<this.num_features;l++){
+        //         res[l] = Float.parseFloat(line[l]);
+        //     }
+        //     return res;
+        // } catch(Error e){System.out.println(e);System.exit(0);}
+    }
+
     /*
         fit function of retrieval system
     */
@@ -264,18 +358,25 @@ public class RetrievalSystem{
 
         System.out.println("Fitting...");
         System.out.println("Computing features for each mesh for each view...");
-        float[][][][] local_features;
-        local_features = new float[files.length][this.num_views][this.num_sample][this.num_features];
+        // float[][][][] local_features;
+        // System.out.println(files.length);
+        // System.out.println(this.num_views);
+        // System.out.println(this.num_sample);
+        // System.out.println(this.num_features);
+        // System.exit(0);
+        // local_features = new float[files.length][this.num_views][this.num_sample][this.num_features];
 
         for(int mesh_id=0;mesh_id<files.length;mesh_id++){
             System.out.format("Total meshes: %4d, Current mesh id: %4d\n",files.length,mesh_id);
             this.viewer.loadModel(files[mesh_id]);
             Mat[] imgs = this.render();
-            local_features[mesh_id] = fc.computeFeature(imgs);
+            // local_features[mesh_id] = fc.computeFeature(imgs);
+            saveRawFeatures(mesh_id,fc.computeFeature(imgs));
         }
 
         System.out.println("Sampling features...");
-        float[][] sampled_features = this.sampleFeatures(local_features);
+        // float[][] sampled_features = this.sampleFeatures(local_features);
+        float[][] sampled_features = this.sampleFeatures(files.length);
 
         System.out.println("Training K-Means...");
         KMeans kmeans = new KMeans(this.size_vocabulary);
@@ -287,7 +388,7 @@ public class RetrievalSystem{
         System.out.println("Computing histograms for each mesh for each view...");
         this.histograms = new float[files.length][this.num_views][this.size_vocabulary];
         for(int i=0;i<files.length;i++){
-            this.histograms[i] = this.getHistograms(local_features[i]);
+            this.histograms[i] = this.getHistograms(this.readRawFeatures(i));
         }
         this.TFIDF(this.histograms);
     }

@@ -33,6 +33,9 @@ public class SurfaceMesh {
 
 		// add vertices
 		Point_3[] ps = sv.points;
+		this.points = ps;
+		this.centralize();
+
 		for(int i=0;i<ps.length;i++){
 			pl.vertices.add(new Vertex<Point_3>(ps[i]));
 		}
@@ -93,6 +96,22 @@ public class SurfaceMesh {
     		i++;
     	}
     	this.scaleFactor=this.computeScaleFactor();
+	}
+
+	private void centralize(){
+		float[] means = new float[3];
+		float l = this.points.length;
+		for(int i=0;i<this.points.length;i++){
+			means[0] += (this.points[i].getX().floatValue()/l);
+			means[1] += (this.points[i].getY().floatValue()/l);
+			means[2] += (this.points[i].getZ().floatValue()/l);
+		}
+		for(int i=0;i<this.points.length;i++){
+			this.points[i] = new Point_3(
+					this.points[i].getX().floatValue()-means[0],
+					this.points[i].getY().floatValue()-means[1],
+					this.points[i].getZ().floatValue()-means[2]);
+		}
 	}
 
 	/**

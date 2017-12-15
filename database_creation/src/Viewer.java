@@ -1,6 +1,6 @@
 import Jcg.geometry.Point_3;
 import processing.core.*;
-
+import org.opencv.core.*;
 public class Viewer extends PApplet {
 
 	static int nModel = 1815;
@@ -15,6 +15,7 @@ public class Viewer extends PApplet {
 	int model_id = 333;
 	String filename;
 	RetrievalSystem rs;
+	float[] angle = null;
 
 	public static String id_to_path(int id){
 		String folder = String.valueOf(id / 100);
@@ -31,8 +32,11 @@ public class Viewer extends PApplet {
 
 		// initialize window size
 	  	size(800,600,P3D);
-		ortho(-width/2, width/2, -height/2, height/2);
+		// ortho(-width/2, width/2, -height/2, height/2);
 		// initialize Arcball
+
+		ArcBall arcball = new ArcBall(this);
+	  	this.arcball = arcball;
 
 		this.rs = new RetrievalSystem(this);
 		String[] files = new String[nModel];
@@ -41,8 +45,7 @@ public class Viewer extends PApplet {
 		}
 		rs.fit(files);
 
-	  	ArcBall arcball = new ArcBall(this);
-	  	this.arcball = arcball;
+
 		this.loadModel();
 	  	// this.mesh.scaleFactor = 500.;
 	}
@@ -59,18 +62,23 @@ public class Viewer extends PApplet {
 	}
 	public void drawContours(ArcBall.Vec3 direction)
 	{
-		directionalLight(255, 255, 255, -1, 0, 0);
-	  	directionalLight(255, 255, 255, 0, -1, 0);
-	  	directionalLight(255, 255, 255, 0, 0, -1);
-	  	directionalLight(255, 255, 255, 1, 0, 0);
-	  	directionalLight(255, 255, 255, 0, 1, 0);
-	  	directionalLight(255, 255, 255, 0, 0, 1);
+		try{
+			directionalLight(255, 255, 255, -1, 0, 0);
+		  	directionalLight(255, 255, 255, 0, -1, 0);
+		  	directionalLight(255, 255, 255, 0, 0, -1);
+		  	directionalLight(255, 255, 255, 1, 0, 0);
+		  	directionalLight(255, 255, 255, 0, 1, 0);
+		  	directionalLight(255, 255, 255, 0, 0, 1);
+		} catch(Exception e){}
 	  	// this.mesh.occludingContours(direction);
 		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
 
 	public void setAngle(float[] angle){
-		throw new Error("Non implemented");
+		this.angle = angle;
+	}
+	public void desetAngle(){
+		this.angle = null;
 	}
 
 	public void draw() {
@@ -78,22 +86,29 @@ public class Viewer extends PApplet {
 		// set the background color
 	  	background(255);
 
+		if(this.angle!=null){
+			this.resetMatrix();
+		}
+
+
 		// set original position
 		/*
 			positive direction x: right (opposite to left)
 			positive direction y: down (opposite to up)
 			positive direction z: close (opposite to far)
 		*/
-	  	translate(width/2.f,height/2.f,-1*height/2.f);
-	  	Point_3 mean = this.mesh.mean();
-	  	translate(-mean.x.floatValue(), -mean.y.floatValue(), -mean.z.floatValue()); // center model
+	  	translate(0.f,0.f,-2*height/1.f);
+	  	ArcBall.Quat q = this.arcball.q_now;
+	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
+		if(this.angle!=null){
+			this.rotateX(angle[0]);
+			this.rotateY(angle[1]);
+			this.rotateZ(angle[2]);
+		}
+
 		// set stroke style
 	  	this.strokeWeight(1);
 	  	stroke(150,150,150);
-
-	  	ArcBall.Quat q = this.arcball.q_now;
-	  	ArcBall.Vec3 direction = new ArcBall.Vec3(q.x, q.y, q.z);
-
 		if(this.mode==0)
 			drawContours(direction);
 	  	else if(this.mode==1)
@@ -126,6 +141,8 @@ public class Viewer extends PApplet {
 	 * For running the PApplet as Java application
 	 */
 	public static void main(String args[]) {
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		System.out.println(System.getProperty("java.version"));
 		PApplet pa=new Viewer();
 		pa.setSize(400, 400);
 		PApplet.main(new String[] { "Viewer" });
