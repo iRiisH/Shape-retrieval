@@ -15,7 +15,7 @@ public class Viewer extends PApplet {
 	static int nModel = 1815;
 	static String path = "../data/benchmark/db/";
 	static int nMode = 2;
-
+	static float stroke_width = 4.f;
 	SurfaceMesh mesh;
 	ArcBall arcball;
 	float scaling = 1.f;
@@ -23,11 +23,16 @@ public class Viewer extends PApplet {
 
 	int model_id = 332;
 	String filename;
+	RetrievalSystem rs;
+
+	public static String id_to_path(int id){
+		String folder = String.valueOf(id / 100);
+		String filename = String.valueOf(id);
+		return path+folder+"/m"+filename+"/m"+filename+".off";
+	}
 
 	private String get_filename(){
-		String folder = String.valueOf(this.model_id / 100);
-		String filename = String.valueOf(this.model_id);
-		return path+folder+"/m"+filename+"/m"+filename+".off";
+		return id_to_path(this.model_id);
 	}
 
 	// initialization
@@ -37,6 +42,14 @@ public class Viewer extends PApplet {
 	  	size(800,600,P3D);
 		ortho(-width/2, width/2, -height/2, height/2);
 		// initialize Arcball
+
+		this.rs = new RetrievalSystem(this);
+		String[] files = new String[nModel];
+		for(int i=0;i<nModel;i++){
+			files[i] = id_to_path(i);
+		}
+		rs.fit(files);
+
 	  	ArcBall arcball = new ArcBall(this);
 	  	this.arcball = arcball;
 		this.loadModel();
@@ -62,7 +75,7 @@ public class Viewer extends PApplet {
 	  	directionalLight(255, 255, 255, 0, 1, 0);
 	  	directionalLight(255, 255, 255, 0, 0, 1);
 	  	// this.mesh.occludingContours(direction);
-		this.mesh.geniusOcclidingCoutours(direction);
+		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
 	
 	Mat toMat(PImage image)
@@ -110,6 +123,10 @@ public class Viewer extends PApplet {
 		return image;
 	}
 	
+	public void setAngle(float[] angle){
+		throw new Error("Non implemented");
+	}
+
 	public void draw() {
 
 		// set the background color
@@ -152,6 +169,7 @@ public class Viewer extends PApplet {
 		//screen.save("test.png");
 	}
 	
+
 	public void keyPressed(){
 		  switch(key) {
 			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel();break;
@@ -178,6 +196,7 @@ public class Viewer extends PApplet {
 	              System.getProperty("user.dir"));
 		
 		PApplet.main(new String[] { "Viewer" });
+
 		PImage pi = pa.createImage(400, 400, RGB);
 		pi.save("test.png");
 		for (int i = 0 ; i < pi.width ; i++)

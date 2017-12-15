@@ -1,3 +1,4 @@
+import processing.core.*;
 import org.opencv.core.*;
 import org.opencv.imgproc.*;
 import org.opencv.highgui.*;
@@ -87,7 +88,7 @@ public class FeatureComputer{
                     // System.out.println(R);
                     // System.out.println(c);
                     // System.out.println(C);
-                    float val = this.Gabor_func((r/1.f/R)*.125f,(c/1.f/C-1.f)*.125f);
+                    float val = this.Gabor_func((r/1.f/R),(c/1.f/C));
                     float[] vals = {val,val};
                     kernel.put(r,c,vals);
                     double[] pixel = kernel.get(r,c);
@@ -272,6 +273,7 @@ public class FeatureComputer{
 
     public static void main(String[] args){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+<<<<<<< HEAD
         Mat[] m = {Highgui.imread("two-nodes.png",Highgui.CV_LOAD_IMAGE_GRAYSCALE)};
         float[] prfs = {0.1f};
         float[] fos = {(float)Math.PI/4.f};
@@ -279,6 +281,30 @@ public class FeatureComputer{
         float[] abs = {10.f};
         FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
         Mat[][] ms = fc.computeResponseImage(m);
+=======
+
+        Viewer viewer = new Viewer();
+        viewer.setSize(400, 400);
+		PApplet.main(new String[] { "Viewer" });
+        PImage img = viewer.get();
+        // PImage img_ = img.get();
+        BufferedImage bimg = (BufferedImage)img.getImage();
+        byte[] pixels = ((DataBufferByte) bimg.getRaster().getDataBuffer())
+            .getData();
+
+        // Create a Matrix the same size of image
+        Mat image = new Mat(bimg.getHeight(), bimg.getWidth(), CvType.CV_8UC3);
+        // Fill Matrix with image values
+        image.put(0, 0, pixels);
+        displayMat(image);
+        // Mat[] m = {Imgcodecs.imread("two-nodes.png",Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)};
+        // float[] prfs = {0.1f};
+        // float[] fos = {(float)Math.PI/4.f};
+        // float[] fbs = {5.f};
+        // float[] abs = {10.f};
+        // FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
+        // Mat[][] ms = fc.computeResponseImage(m);
+>>>>>>> 753241a3cbd9ce9efb4a8e24c6a430e4cadd4fc9
         // displayMat(ms[0][0]);
         return;
     }
