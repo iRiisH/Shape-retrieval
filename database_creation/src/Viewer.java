@@ -110,7 +110,6 @@ public class Viewer extends PApplet {
 	
 	PImage toPImage(Mat mat) 
 	{
-		// TODO: correct this
 		int w = mat.width();
 		int h = mat.height();
 		  
