@@ -69,7 +69,7 @@ public class Viewer extends PApplet {
 		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
 
-	public void setAngle(){
+	public void setAngle(float[] angle){
 		throw new Error("Non implemented");
 	}
 

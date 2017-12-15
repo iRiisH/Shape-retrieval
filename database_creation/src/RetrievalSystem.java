@@ -1,5 +1,14 @@
 import org.opencv.core.*;
+import processing.core.*;
 import java.util.*;
+import java.awt.image.*;
+// import java.awt.image.BufferedImage;
+import java.util.*;
+// import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.FlowLayout;
+import javax.swing.*;
 
 public class RetrievalSystem{
 
@@ -106,8 +115,33 @@ public class RetrievalSystem{
         throw new Error("Non implemented");
     }
 
-    public static Mat PImage2Mat(PImage img){
-        throw new Error("Non implemented");
+    /*
+        External Codes
+    */
+    public Mat BufferedImage2Mat(BufferedImage im) {
+        // Convert INT to BYTE
+        //im = new BufferedImage(im.getWidth(), im.getHeight(),BufferedImage.TYPE_3BYTE_BGR);
+        // Convert bufferedimage to byte array
+        byte[] pixels = ((DataBufferByte) im.getRaster().getDataBuffer())
+                .getData();
+
+        // Create a Matrix the same size of image
+        Mat image = new Mat(im.getHeight(), im.getWidth(), CvType.CV_8UC3);
+        // Fill Matrix with image values
+        image.put(0, 0, pixels);
+
+        return image;
+    }
+    public static BufferedImage Image2BufferedImage(Image im){
+        BufferedImage bi = new BufferedImage
+        (im.getWidth(null),im.getHeight(null),BufferedImage.TYPE_INT_RGB);
+         Graphics bg = bi.getGraphics();
+         bg.drawImage(im, 0, 0, null);
+         bg.dispose();
+         return bi;
+    }
+    public static Image PImage2Image(PImage img){
+        return img.getImage();
     }
 
     /*
@@ -118,7 +152,9 @@ public class RetrievalSystem{
         for(int i=0;i<this.num_views;i++){
             this.viewer.setAngle(this.angles[i]);
             this.viewer.draw();
-            views[i] = PImage2Mat(this.viewer.copy());
+            views[i] = BufferedImage2Mat(
+                    Image2BufferedImage(
+                            PImage2Image(this.viewer.get())));
         }
         return views;
     }
