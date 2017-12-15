@@ -129,6 +129,12 @@ public class FeatureComputer{
         			arr[i][j] = img.get(i, j)[0];
         		}
         	}
+        	
+        	System.out.println(h);
+        	System.out.println(w);
+        	System.out.println(gabor.length);
+        	System.out.println(gabor[0].length);
+        	
         	return Convolution.convolution2D(arr, h, w, gabor, gabor.length, gabor[0].length);
         }
         
@@ -338,8 +344,6 @@ public class FeatureComputer{
     		}
     	}*/
         Mat[][] rimg = this.computeResponseImage(ms);
-        for (int i = 0 ; i < rimg[0].length; i++)
-        	displayMat(rimg[0][i]);
         float[][] frames = this.computeCoords(rimg[0][0].rows(),rimg[0][0].cols());
         float[][][] features = computeLocalFeatures(rimg,frames);
         return features;
@@ -394,43 +398,5 @@ public class FeatureComputer{
         }
         System.out.println();
         System.exit(0);
-    }
-
-    public static void main(String[] args){
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-// <<<<<<< HEAD
-        Mat[] m = {Highgui.imread("two-nodes.png",Highgui.CV_LOAD_IMAGE_GRAYSCALE)};
-        float[] theta = {0.f};
-        float[] fos = {(float)Math.PI/4.f};
-        float[] fbs = {5.f};
-        float[] abs = {10.f};
-        FeatureComputer fc = new FeatureComputer(theta, 32,32,0.075f,4);
-        Mat[][] ms = fc.computeResponseImage(m);
-// =======
-
-        Viewer viewer = new Viewer();
-        viewer.setSize(400, 400);
-		PApplet.main(new String[] { "Viewer" });
-        PImage img = viewer.get();
-        // PImage img_ = img.get();
-        BufferedImage bimg = (BufferedImage)img.getImage();
-        byte[] pixels = ((DataBufferByte) bimg.getRaster().getDataBuffer())
-            .getData();
-
-        // Create a Matrix the same size of image
-        Mat image = new Mat(bimg.getHeight(), bimg.getWidth(), CvType.CV_8UC3);
-        // Fill Matrix with image values
-        image.put(0, 0, pixels);
-        displayMat(image);
-        // Mat[] m = {Imgcodecs.imread("two-nodes.png",Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)};
-        // float[] prfs = {0.1f};
-        // float[] fos = {(float)Math.PI/4.f};
-        // float[] fbs = {5.f};
-        // float[] abs = {10.f};
-        // FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
-        // Mat[][] ms = fc.computeResponseImage(m);
-// >>>>>>> 753241a3cbd9ce9efb4a8e24c6a430e4cadd4fc9
-        // displayMat(ms[0][0]);
-        return;
     }
 }

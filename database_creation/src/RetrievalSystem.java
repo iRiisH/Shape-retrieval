@@ -5,7 +5,10 @@ import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.*;
+import java.util.stream.Stream;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.awt.image.*;
 // import java.awt.image.BufferedImage;
 // import java.awt.*;
@@ -67,10 +70,10 @@ public class RetrievalSystem{
         this.num_kernels = 4;
         this.n_tile = 4;
         this.feature_size = 0.2f;
-        this.size_vocabulary = 2500;
+        this.size_vocabulary = 3;
         this.num_views = 48;
-        this.num_row_sample = 32;
-        this.num_col_sample = 32;
+        this.num_row_sample = 8;
+        this.num_col_sample = 8;
         this.num_sample = this.num_row_sample * this.num_col_sample;
         this.kmeans_train_size = (int)1E6;
         this.num_features = this.num_kernels * this.n_tile * this.n_tile;
@@ -125,7 +128,7 @@ public class RetrievalSystem{
 
     private float[][] getAngles(){
         // float[][] angles = {{0.f,0.f,0.f}};
-        this.num_views = 22;
+        this.num_views = 7;
     	float[][] angles = ReadViews.cart2cam(ReadViews.read_views(this.num_views));
         /* 
         for(int i=0;i<48;i++){
@@ -188,6 +191,7 @@ public class RetrievalSystem{
                                     PImage2Image(this.viewer.get()))),
                     views[i],Imgproc.COLOR_RGB2GRAY);
             Core.bitwise_not(views[i],views[i]);
+            //FeatureComputer.displayMat(views[i]);
             Highgui.imwrite("bin/views/views_"+String.valueOf(i)+".jpg",views[i]);
         }
         return views;
@@ -216,19 +220,24 @@ public class RetrievalSystem{
     */
     private float[][] sampleFeatures(int num_mesh){
         int total_local_features = num_mesh * this.num_views * this.num_sample;
-        int train_size = this.kmeans_train_size;
+        int train_size = Math.min(this.kmeans_train_size,total_local_features);
         float[][] sampled_features = new float[train_size][this.num_features];
         ArrayList<Integer> ids = new ArrayList<Integer>(total_local_features);
         for(int i=0;i<total_local_features;i++){ids.add(i);}
         Collections.shuffle(ids);
+
         for(int i=0,pos=0;i<train_size;i++){
-            if(pos>=ids.size()) throw new Error("Too much zero features!");
+        	if(pos>=ids.size()) break;
             while(true){
+            	if(pos>=ids.size()) break;
+                System.out.println('a');
                 int cur = ids.get(pos);
                 int a = cur/this.num_views/this.num_sample;
                 int b = cur%this.num_views/this.num_sample;
                 int c = cur%this.num_sample;
+                System.out.println('q');
                 float[] local_feature = this.readRawFeatures(a,b,c);
+                System.out.println('s');
                 if(isZeros(local_feature))pos++;
                 else{
                     sampled_features[i] = local_feature;
@@ -335,7 +344,7 @@ public class RetrievalSystem{
                 for(int j=0;j<n_s;j++){
                     line = bufferedReader.readLine().split("\\s");
                     for(int k=0;k<n_f;k++){
-                        res[i][j][k] = Integer.parseInt(line[k]);
+                        res[i][j][k] = Float.parseFloat(line[k]);
                     }
                 }
             }
@@ -347,16 +356,20 @@ public class RetrievalSystem{
     }
 
     private float[] readRawFeatures(int i,int j,int k){
-        throw new Error("not implemented");
-        // try{
-        //     Stream<String> lines = Files.lines(Paths.get(this.getRawFeatureFilename(i)));
-        //     line = lines.skip(j*this.num_sample+k).findFirst().get().split("\\s");
-        //     float[] res = new float[this.num_features];
-        //     for(int l=0;l<this.num_features;l++){
-        //         res[l] = Float.parseFloat(line[l]);
-        //     }
-        //     return res;
-        // } catch(Error e){System.out.println(e);System.exit(0);}
+    	float[] res = null;
+        try{
+            Stream<String> lines = Files.lines(Paths.get(this.getRawFeatureFilename(i)));
+            String[] line = lines.skip(j*this.num_sample+k+1).findFirst().get().split("\\s");
+            res = new float[this.num_features];
+            System.out.println('l');
+            System.out.println(line.length);
+            for(int l=0;l<this.num_features;l++){
+                res[l] = Float.parseFloat(line[l]);
+            }
+            System.out.println('e');
+            
+        } catch(Exception e){System.out.println(e);System.exit(0);}
+        return res;
     }
 
     /*

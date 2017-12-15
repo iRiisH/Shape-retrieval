@@ -13,7 +13,7 @@ import org.opencv.imgproc.Imgproc;
 
 public class Viewer extends PApplet {
 
-	static int nModel = 1815;
+	static int nModel = 2;
 	static String path = "../data/benchmark/db/";
 	static int nMode = 2;
 	static float stroke_width = 3.f;
@@ -42,7 +42,7 @@ public class Viewer extends PApplet {
 
 		// initialize window size
 	  	size(800,600,P3D);
-		// ortho(-width/2, width/2, -height/2, height/2);
+
 		// initialize Arcball
 
 		ArcBall arcball = new ArcBall(this);
@@ -54,8 +54,10 @@ public class Viewer extends PApplet {
 			files[i] = id_to_path(i);
 		}
 		rs.fit(files);
-
-
+		Mat[] test = {new Mat()};
+		test[0] = Highgui.imread("./bin/views/views_4.jpg");
+		System.out.println(test[0].size());
+		System.out.println(rs.predict(test, 1)[0][0]);
 		this.loadModel(this.get_filename());
 	  	// this.mesh.scaleFactor = 500.;
 	}
