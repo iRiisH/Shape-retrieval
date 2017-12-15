@@ -32,7 +32,7 @@ def convolve():
 	return res
 
 
-#gb = gabor_fn(10.,  0.5, 20., 0., 1.)	
+#gb = gabor_fn(100.,  0.5, 200., 0., 1.)	
 #plt.imshow(gb)
 #plt.colorbar()
 #plt.show()

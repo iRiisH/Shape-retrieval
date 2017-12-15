@@ -71,7 +71,39 @@ public class FeatureComputer{
             }
 
         }
+        
+        private double[][] gabor_field(double sigma, double theta, double Lambda, double psi, double gamma)
+        {
+        	double sigma_x = sigma;
+        	double sigma_y = sigma / gamma;
 
+
+        	int nstds = 5; //Number of standard deviation sigma
+        	double xmax = Math.max(Math.abs(nstds * sigma_x * Math.cos(theta)), Math.abs(nstds * sigma_y * Math.sin(theta)));
+        	int xmax_i = (int)Math.ceil(Math.max(1, xmax));
+        	double ymax = Math.max(Math.abs(nstds * sigma_x * Math.sin(theta)), Math.abs(nstds * sigma_y * Math.cos(theta)));
+        	int ymax_i = (int)Math.ceil(Math.max(1, ymax));
+        	int xmin_i = -xmax_i;
+        	int ymin_i = -ymax_i;
+        	double[][] result = new double[xmax_i+1-xmin_i][ymax_i+1-ymin_i];
+        	for (int i = xmin_i ; i < xmax_i+1 ; i++)
+        	{
+        		for (int j = ymin_i ; j < ymax_i+1 ; j++)
+        		{
+        			double y = (double)j;
+        			double x = (double)i;
+        			// Rotation 
+        		    double x_theta = x * Math.cos(theta) + y * Math.sin(theta);
+        		    double y_theta = -x * Math.sin(theta) + y * Math.cos(theta);
+        		    double gb = Math.exp(-.5 * (Math.pow(x_theta,  2.) / Math.pow(sigma_x, 2.) + Math.pow(y_theta, 2.) /
+        		    		Math.pow(sigma_y,2.))) * Math.cos(2 * Math.PI / Lambda * x_theta + psi);
+        		    result[i][j] = gb;
+
+        		}
+        	}
+        	return result;
+        }
+        
         private float Gabor_func(float u,float v){
             float _u = cfo * u - sfo * v;
             float _v = sfo * u + cfo * v;
