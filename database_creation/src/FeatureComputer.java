@@ -49,7 +49,7 @@ public class FeatureComputer{
                     0,
                     addPixelRows - image.rows(),
                     0,
-                    addPixelCols - image.cols(), 
+                    addPixelCols - image.cols(),
                     Imgproc.BORDER_CONSTANT,
                     Scalar.all(0));
             padded.convertTo(padded, CvType.CV_32F);
@@ -286,7 +286,7 @@ public class FeatureComputer{
 
     public static void main(String[] args){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-<<<<<<< HEAD
+// <<<<<<< HEAD
         Mat[] m = {Highgui.imread("two-nodes.png",Highgui.CV_LOAD_IMAGE_GRAYSCALE)};
         float[] prfs = {0.1f};
         float[] fos = {(float)Math.PI/4.f};
@@ -294,7 +294,7 @@ public class FeatureComputer{
         float[] abs = {10.f};
         FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
         Mat[][] ms = fc.computeResponseImage(m);
-=======
+// =======
 
         Viewer viewer = new Viewer();
         viewer.setSize(400, 400);
@@ -317,7 +317,7 @@ public class FeatureComputer{
         // float[] abs = {10.f};
         // FeatureComputer fc = new FeatureComputer(prfs,fos,fbs,abs,32,32,0.075f,4);
         // Mat[][] ms = fc.computeResponseImage(m);
->>>>>>> 753241a3cbd9ce9efb4a8e24c6a430e4cadd4fc9
+// >>>>>>> 753241a3cbd9ce9efb4a8e24c6a430e4cadd4fc9
         // displayMat(ms[0][0]);
         return;
     }
