@@ -1,5 +1,8 @@
 import java.util.*;
 
+/*
+    Auxiliary class for argsort
+*/
 public class Argsort{
 
     private class ArgsortElement implements Comparable<ArgsortElement>{
