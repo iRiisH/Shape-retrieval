@@ -41,7 +41,11 @@ public class KMeans{
         return -1;
     }
 
-    public boolean guaranteeNonEmpty(){
+    public boolean guaranteeNonEmpty()
+    /*
+     * returns true iff 
+     */
+    {
         int empty_id = this.emptyIndex();
         if(empty_id<0) return true;
         int picked = this.random.nextInt(this.n);
@@ -49,7 +53,11 @@ public class KMeans{
         return false;
     }
 
-    public static float norm2(float[] a){
+    public static float norm2(float[] a)
+    /*
+     * euclidian norm of a
+     */
+    {
         float r = 0.f;
         for(int i=0;i<a.length;i++){
             r += (float)Math.pow(a[i],2);
@@ -57,7 +65,11 @@ public class KMeans{
         return (float)Math.sqrt(r);
     }
 
-    public static float norm2(float[] a,float[] b){
+    public static float norm2(float[] a,float[] b)
+    /*
+     * euclidian distance between points a & b
+     */
+    {
         float r = 0.f;
         for(int i=0;i<a.length;i++){
             r += (float)Math.pow(a[i]-b[i],2);
@@ -65,7 +77,11 @@ public class KMeans{
         return (float)Math.sqrt(r);
     }
 
-    public void distribute(){
+    public void distribute()
+    /*
+     * associates label to data, given by the closest centroid
+     */
+    {
         this.counts = new int[this.num_cluster];
         this.labels = new int[this.n];
         for(int i=0;i<this.n;i++){
@@ -83,7 +99,11 @@ public class KMeans{
         }
     }
 
-    public void getCentroids(){
+    public void getCentroids()
+    /*
+     * compute new centroids
+     */
+    {
         this.centroids = new float[this.num_cluster][this.dim];
         for(int i=0;i<this.n;i++){
             for(int j=0;j<dim;j++){
@@ -92,7 +112,9 @@ public class KMeans{
         }
     }
 
-    public void fit(float[][] data){
+    public void fit(float[][] data)
+    // main k-NN function
+    {
         this.data = data;
         this.n = data.length;
         this.dim = data[0].length;
@@ -110,7 +132,8 @@ public class KMeans{
         }
     }
 
-    public float divergence(){
+    public float divergence()
+    {
         float div = 0.f;
         for(int i=0;i<this.n;i++){
             div += this.norm2(this.centroids[this.labels[i]],this.data[i]);
@@ -118,7 +141,8 @@ public class KMeans{
         return div;
     }
 
-    public void printCentroids(){
+    public void printCentroids()
+    {
         for(int i=0;i<this.num_cluster;i++){
             for(int j=0;j<this.centroids[0].length;j++){
                 System.out.print(this.centroids[i][j]);
@@ -133,7 +157,12 @@ public class KMeans{
         }
         System.out.println();
     }
-    public void printLabels(){
+    
+    public void printLabels()
+    /*
+     * display labels
+     */
+    {
         for(int i=0;i<this.labels.length;i++){
             System.out.print(this.labels[i]);
         }
