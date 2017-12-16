@@ -11,7 +11,8 @@ import org.opencv.core.CvType;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
-public class Viewer extends PApplet {
+public class Viewer extends PApplet
+{
 
 	static int nModel = 2;
 	static String path = "../data/benchmark/db/";
@@ -22,12 +23,16 @@ public class Viewer extends PApplet {
 	float scaling = 1.f;
 	int mode = 0;
 
-	int model_id = 332;
+	int model_id = 1129; // interesting ones: 88, 92, 333, 332, 1129
 	String filename;
 	RetrievalSystem rs;
 	float[] angle = null;
 
-	public static String id_to_path(int id){
+	public static String id_to_path(int id)
+	/*
+	 * returns filepath associated with model id (PSB format)
+	 */
+	{
 		String folder = String.valueOf(id / 100);
 		String filename = String.valueOf(id);
 		return path+folder+"/m"+filename+"/m"+filename+".off";
@@ -48,20 +53,22 @@ public class Viewer extends PApplet {
 		ArcBall arcball = new ArcBall(this);
 	  	this.arcball = arcball;
 
-		this.rs = new RetrievalSystem(this);
+		//this.rs = new RetrievalSystem(this);
 		String[] files = new String[nModel];
 		for(int i=0;i<nModel;i++){
 			files[i] = id_to_path(i);
 		}
-		rs.fit(files);
+		//rs.fit(files);
 		Mat[] test = {new Mat()};
 		test[0] = Highgui.imread("./bin/views/views_4.jpg");
 		System.out.println(test[0].size());
-		System.out.println(rs.predict(test, 1)[0][0]);
+		//System.out.println(rs.predict(test, 1)[0][0]);
 		this.loadModel(this.get_filename());
 	  	// this.mesh.scaleFactor = 500.;
 	}
+	
 	public void drawNormal()
+	// draws the model normally (ie. faces/edges)
 	{
 		directionalLight(101, 204, 255, -1, 0, 0);
 	  	directionalLight(51, 102, 126, 0, -1, 0);
@@ -73,6 +80,7 @@ public class Viewer extends PApplet {
 
 	}
 	public void drawContours()
+	// draws the models in occluding contours mode
 	{
 		try{
 			directionalLight(255, 255, 255, -1, 0, 0);
@@ -87,14 +95,6 @@ public class Viewer extends PApplet {
 	  	// this.mesh.occludingContours(direction);
 		this.mesh.geniusOcclidingCoutours(direction,stroke_width);
 	}
-	
-	public PImage get_contours()
-	{
-		drawContours();
-		return this.get();
-	}
-	
-
 	
 	
 	Mat toMat(PImage image)
@@ -128,6 +128,7 @@ public class Viewer extends PApplet {
 
 
 	PImage toPImage(Mat mat)
+	// convert OpenCV Mat to Processing PImage
 	{
 		int w = mat.width();
 		int h = mat.height();
@@ -164,9 +165,15 @@ public class Viewer extends PApplet {
 			positive direction y: down (opposite to up)
 			positive direction z: close (opposite to far)
 		*/
-	  	translate(0.f,0.f,-2.f*height);
+		
+	  	//translate(0.f,0.f,-2.f*height);
+		
+		// center model
+	  	translate(width/2.f,height/2.f,-1*height/2.f);
+	  	Point_3 mean = this.mesh.mean();
+	  	translate(-mean.x.floatValue(), -mean.y.floatValue(), -mean.z.floatValue()); 
 	  	
-		if(this.angle!=null){
+	  	if(this.angle!=null){
 			this.rotateX(angle[0]);
 			this.rotateY(angle[1]);
 			this.rotateZ(angle[2]);
@@ -183,21 +190,16 @@ public class Viewer extends PApplet {
 		//this.mesh.draw();
 	}
 
-	public void loadModel(String filename){
+	public void loadModel(String filename)
+	//loads the model associated to the given filename in the current PApplet
+	{
 	  	this.mesh=new SurfaceMesh(this, filename);
 		this.mesh.scaleFactor *= this.scaling;
 	}
 
-	public void save()
+
+	public void keyPressed()
 	{
-		PImage screen = get();
-		Mat test = toMat(screen);
-		Highgui.imwrite("test.png", test);
-		//screen.save("test.png");
-	}
-
-
-	public void keyPressed(){
 		  switch(key) {
 			case('n'):this.model_id=(this.model_id+1)%nModel;loadModel(this.get_filename());break;
 			case('p'):this.model_id=(this.model_id+nModel-1)%nModel;loadModel(this.get_filename());break;
@@ -205,7 +207,6 @@ public class Viewer extends PApplet {
 			case('S'):this.scaling /= 1.1;this.mesh.scaleFactor /= 1.1;break;
 			case('M'):this.mode = (this.mode+1)%nMode;break;
 			case('O'):SurfaceMesh.occludingOffset *= 1.1;break;
-			case('s'):this.save();break;
 			case('o'):SurfaceMesh.occludingOffset /= 1.1;break;
 		  }
 	}
